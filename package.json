@@ -1,0 +1,25 @@
+{
+  "name": "yearn-staking-contract",
+  "version": "1.0.0",
+  "description": "# WARNING THESE ARE UNAUDITED CONTRACTS",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv-flow": "^3.2.0",
+    "ethers": "^5.0.8",
+    "ganache-core": "^2.11.2"
+  },
+  "devDependencies": {
+    "@truffle/hdwallet-provider": "^1.0.40",
+    "ethereumjs-abi": "^0.6.8",
+    "ethereumjs-util": "^7.0.4",
+    "truffle": "^5.0.44",
+    "truffle-flattener": "^1.5.0",
+    "truffle-plugin-verify": "^0.3.11"
+  }
+}

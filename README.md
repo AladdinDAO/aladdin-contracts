@@ -1,4 +1,6 @@
-# contract-test
+# yearn-staking-contracts
+
+WIP, functions might not work as expected.
 
 ## KOVAN
 StrategyUSDCCompound - `0x2a0E4029557d97cB1b0A2a6F59f0B3B82A3073a5`
