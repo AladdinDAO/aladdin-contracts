@@ -60,6 +60,11 @@ contract DAOFunding {
         _;
     }
 
+    modifier onlyDistributor() {
+        require(msg.sender == rewardDistributor);
+        _;
+    }
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     // fund the dao and get shares
@@ -113,7 +118,7 @@ contract DAOFunding {
         SafeERC20.safeTransfer(IERC20(_token), _destination, _amount);
     }
 
-    function distributeRewards(uint _amount) public {
+    function notifyRewardAmount(uint _amount) public onlyDistributor {
         rewardsPerShareStored = rewardsPerShareStored.add(_amount.div(totalShares));
     }
 
