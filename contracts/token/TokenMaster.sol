@@ -4,7 +4,7 @@ import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
 import "../common/SafeMath.sol";
 import "../common/Ownable.sol";
-import "../DefixToken.sol";
+import "./DefixToken.sol";
 
 contract TokenMaster is Ownable {
     using SafeMath for uint256;

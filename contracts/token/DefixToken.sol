@@ -1,6 +1,6 @@
 pragma solidity 0.6.12;
 
-import "./common/ERC20.sol";
+import "../common/ERC20.sol";
 
 // DefixToken with Governance.
 contract DefixToken is ERC20("DefixToken", "DEFIX") {
