@@ -20,8 +20,6 @@ async function deployStrategyUSDCCompound(deployer, network) {
 
   await deployer.deploy(
     StrategyUSDCCompound,
-    controller.address,
-    "0xb7a4F3E9097C08dA09517b5aB877F7a917224ede", // usdc
-    "0x61460874a7196d6a22D1eE4922473664b3E95270" // comp
+    controller.address
   )
 }
