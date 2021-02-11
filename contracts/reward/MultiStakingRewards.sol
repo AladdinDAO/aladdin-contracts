@@ -34,32 +34,12 @@ contract MultiStakingRewards is ReentrancyGuard {
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
-    mapping(address => RewardPool) public rewardPools;
+    mapping(address => RewardPool) public rewardPools; // reward token to reward pool mapping
     address[] public activeRewardPools; // list of reward tokens that are distributing rewards
-
-
-
-
-
-    IERC20 public rewardsToken;
-    uint256 public periodFinish = 0;
-    uint256 public rewardRate = 0;
-    uint256 public rewardsDuration = 7 days;
-    uint256 public lastUpdateTime;
-    uint256 public rewardPerTokenStored;
-
-    mapping(address => uint256) public userRewardPerTokenPaid;
-    mapping(address => uint256) public rewards;
-
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
-        address _rewardsToken,
-        address _stakingToken
-    ) public {
-        rewardsToken = IERC20(_rewardsToken);
-        stakingToken = IERC20(_stakingToken);
+    constructor() public {
         rewardsDistribution = msg.sender;
         governance = msg.sender;
     }
@@ -104,6 +84,41 @@ contract MultiStakingRewards is ReentrancyGuard {
         return pool.rewardRate.mul(pool.rewardsDuration);
     }
 
+    function periodFinish(address _rewardToken) public view returns (uint256) {
+        RewardPool storage pool = rewardPools[_rewardToken];
+        return pool.periodFinish;
+    }
+
+    function rewardRate(address _rewardToken) public view returns (uint256) {
+        RewardPool storage pool = rewardPools[_rewardToken];
+        return pool.rewardRate;
+    }
+
+    function rewardsDuration(address _rewardToken) public view returns (uint256) {
+        RewardPool storage pool = rewardPools[_rewardToken];
+        return pool.rewardsDuration;
+    }
+
+    function lastUpdateTime(address _rewardToken) public view returns (uint256) {
+        RewardPool storage pool = rewardPools[_rewardToken];
+        return pool.lastUpdateTime;
+    }
+
+    function rewardPerTokenStored(address _rewardToken) public view returns (uint256) {
+        RewardPool storage pool = rewardPools[_rewardToken];
+        return pool.rewardPerTokenStored;
+    }
+
+    function userRewardPerTokenPaid(address _rewardToken, address _account) public view returns (uint256) {
+        RewardPool storage pool = rewardPools[_rewardToken];
+        return pool.userRewardPerTokenPaid[_account];
+    }
+
+    function rewards(address _rewardToken, address _account) public view returns (uint256) {
+        RewardPool storage pool = rewardPools[_rewardToken];
+        return pool.rewards[_account];
+    }
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function stake(uint256 amount) external nonReentrant updateActiveRewards(msg.sender) {
@@ -126,7 +141,7 @@ contract MultiStakingRewards is ReentrancyGuard {
         RewardPool storage pool = rewardPools[_rewardToken];
         uint256 reward = pool.rewards[msg.sender];
         if (reward > 0) {
-            rewards[msg.sender] = 0;
+            pool.rewards[msg.sender] = 0;
             pool.rewardToken.safeTransfer(msg.sender, reward);
             emit RewardPaid(_rewardToken, msg.sender, reward);
         }
@@ -137,7 +152,7 @@ contract MultiStakingRewards is ReentrancyGuard {
             RewardPool storage pool = rewardPools[activeRewardPools[i]];
             uint256 reward = pool.rewards[msg.sender];
             if (reward > 0) {
-                rewards[msg.sender] = 0;
+                pool.rewards[msg.sender] = 0;
                 pool.rewardToken.safeTransfer(msg.sender, reward);
                 emit RewardPaid(address(pool.rewardToken), msg.sender, reward);
             }
