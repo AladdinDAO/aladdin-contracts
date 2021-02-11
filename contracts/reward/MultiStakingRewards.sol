@@ -148,7 +148,7 @@ contract MultiStakingRewards is ReentrancyGuard {
     }
 
     function getAllActiveRewards() public nonReentrant updateActiveRewards(msg.sender) {
-        for (uint i = 0; i < activeRewardPools.length - 1; i++) {
+        for (uint i = 0; i < activeRewardPools.length; i++) {
             RewardPool storage pool = rewardPools[activeRewardPools[i]];
             uint256 reward = pool.rewards[msg.sender];
             if (reward > 0) {
@@ -217,7 +217,7 @@ contract MultiStakingRewards is ReentrancyGuard {
         // find the index
         uint indexToDelete = 0;
         bool found = false;
-        for (uint i = 0; i < activeRewardPools.length - 1; i++) {
+        for (uint i = 0; i < activeRewardPools.length; i++) {
             if (activeRewardPools[i] == _rewardToken) {
                 indexToDelete = i;
                 found = true;
@@ -241,7 +241,7 @@ contract MultiStakingRewards is ReentrancyGuard {
     /* ========== MODIFIERS ========== */
 
     modifier updateActiveRewards(address _account) {
-        for (uint i = 0; i < activeRewardPools.length - 1; i++) {
+        for (uint i = 0; i < activeRewardPools.length; i++) {
             RewardPool storage pool = rewardPools[activeRewardPools[i]];
 
             pool.rewardPerTokenStored = rewardPerToken(address(pool.rewardToken));
