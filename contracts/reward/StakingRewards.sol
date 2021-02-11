@@ -46,7 +46,7 @@ contract StakingRewards is RewardsDistributionRecipient, ReentrancyGuard {
     ) public {
         rewardsToken = IERC20(_rewardsToken);
         stakingToken = IERC20(_stakingToken);
-        rewardsDistribution = _rewardsDistribution;
+        rewardsDistribution = msg.sender;
     }
 
     /* ========== VIEWS ========== */
