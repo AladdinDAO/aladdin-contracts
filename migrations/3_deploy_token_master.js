@@ -18,4 +18,6 @@ module.exports = migration;
 async function deployTokenMaster(deployer, network) {
   const defixToken = await DefixToken.deployed();
   await deployer.deploy(TokenMaster, defixToken.address)
+
+  // Add token master as minter to defix token
 }

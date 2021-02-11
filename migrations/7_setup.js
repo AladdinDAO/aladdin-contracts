@@ -20,5 +20,4 @@ async function setupContracts(deployer, network) {
 
   // Add strategy and vault to controller
   // Add vault to token master
-  // Add token master as minter to defix token
 }
