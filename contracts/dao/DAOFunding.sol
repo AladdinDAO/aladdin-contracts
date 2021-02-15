@@ -21,6 +21,7 @@ contract DAOFunding {
     uint public shareCap;
 
     mapping(address => bool) public isWhitelisted;
+    address[] public whitelist;
 
     mapping(address => uint) public shares;
     uint public totalShares;
@@ -44,9 +45,10 @@ contract DAOFunding {
         reward = IERC20(_reward);
         rate = _rate;
         shareCap = _shareCap;
+        whitelist = _whitelist;
 
         for (uint i=0; i<_whitelist.length - 1; i++) {
-            setWhiteList(_whitelist[i], true);
+            isWhitelisted[_whitelist[i]] = true;
         }
 
         governance = msg.sender;
@@ -164,15 +166,36 @@ contract DAOFunding {
         shareCap = _shareCap;
     }
 
-    function setWhiteList(address _user, bool status)
+    function addToWhitelist(address _user)
         public
         onlyGov
     {
-        isWhitelisted[_user] = status;
-        emit SetWhitelist(_user, status);
+        require(isWhitelisted[_user] == false, "already in whitelist");
+        isWhitelisted[_user] = true;
+        whitelist.push(_user);
     }
 
-    /* ========== EVENTS ========== */
+    function removeFromWhitelist(address _user)
+        public
+        onlyGov
+    {
+        require(isWhitelisted[_user] == true, "not in whitelist");
+        isWhitelisted[_user] = false;
 
-    event SetWhitelist(address indexed user, bool status);
+        // find the index
+        uint indexToDelete = 0;
+        bool found = false;
+        for (uint i = 0; i < whitelist.length; i++) {
+            if (whitelist[i] == _user) {
+                indexToDelete = i;
+                found = true;
+                break;
+            }
+        }
+
+        // remove element
+        require(found == true, "user not found in whitelist");
+        whitelist[indexToDelete] = whitelist[whitelist.length - 1];
+        whitelist.pop();
+    }
 }
