@@ -15,15 +15,15 @@ contract DAOFunding {
     address public governance;
     address public rewardDistributor;
 
-    IERC20 want;
-    IERC20 reward;
-    uint rate; // wants per share
-    uint shareCap;
+    IERC20 public want;
+    IERC20 public reward;
+    uint public rate; // wants per share
+    uint public shareCap;
 
-    mapping(address => bool) isWhitelisted;
+    mapping(address => bool) public isWhitelisted;
 
-    mapping(address => uint) shares;
-    uint totalShares;
+    mapping(address => uint) public shares;
+    uint public totalShares;
 
     uint public rewardsPerShareStored;
     mapping(address => uint256) public rewardsPerSharePaid;
