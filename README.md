@@ -6,7 +6,7 @@ WIP, functions might not work as expected.
 StrategyController - `0xe6046D8C0064778c2D0306315d46c5A1c2d4D785`
 TokenMaster - `0xb05898C29046F5Ee62013cA930493c5309C048ac`
 DefixToken - `0x21fe87a0d0695a5701547fe61caf325ada0F923e`
-DAOFunding - `0x12335A34B4C8B3335B892B890B1F0F604f9AACa1`
+DAOFunding - ``
 DAOTreasury - `0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb`
 
 ### USDC Compound Strategy

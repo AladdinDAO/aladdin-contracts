@@ -23,6 +23,7 @@ contract DAOFunding {
     mapping(address => bool) public isWhitelisted;
     address[] public whitelist;
 
+    address[] public daoMembers;
     mapping(address => uint) public shares;
     uint public totalShares;
 
@@ -75,6 +76,11 @@ contract DAOFunding {
 
         uint w = _shares.mul(rate);
         want.safeTransferFrom(msg.sender, address(this), w);
+
+        // add new member to dao list
+        if (shares[msg.sender] == 0) {
+            daoMembers.push(msg.sender);
+        }
 
         shares[msg.sender] = shares[msg.sender].add(_shares);
         totalShares = totalShares.add(_shares);
