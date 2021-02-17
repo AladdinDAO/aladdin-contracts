@@ -41,8 +41,8 @@ contract TokenMaster is Ownable {
 
     // The DEFIX TOKEN!
     DefixToken public defix;
-    // team address.
-    address public teamaddr;
+    // token distributor address.
+    address public tokenDistributor;
 
     // The block number when DEFIX mining starts.
     uint256 public startBlock;
@@ -71,10 +71,11 @@ contract TokenMaster is Ownable {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        DefixToken _defix
+        DefixToken _defix,
+        address _tokenDistributor
     ) public {
         defix = _defix;
-        teamaddr = msg.sender;
+        tokenDistributor = _tokenDistributor;
         startBlock = block.number;
 
         for (uint256 i = 0; i < REWARD_MULTIPLIER.length - 1; i++) {
@@ -197,7 +198,7 @@ contract TokenMaster is Ownable {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 defixReward = multiplier.mul(defixPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        defix.mint(teamaddr, defixReward.div(10));
+        defix.mint(tokenDistributor, defixReward.div(10));
         defix.mint(address(this), defixReward);
         pool.accDefixPerShare = pool.accDefixPerShare.add(defixReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
@@ -217,10 +218,9 @@ contract TokenMaster is Ownable {
 
     /* ========== RESTRICTED FUNCTONS ========== */
 
-    // Update team address.
-    function team(address _teamaddr) public {
-        require(msg.sender == teamaddr, "team: wut?");
-        teamaddr = _teamaddr;
+    // Update token distributor address.
+    function setTokenDistributor(address _tokenDistributor) public onlyOwner {
+        tokenDistributor = _tokenDistributor;
     }
 
     // Add a new lp to the pool. Can only be called by the owner.
