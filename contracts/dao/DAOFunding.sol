@@ -17,7 +17,7 @@ contract DAOFunding {
 
     IERC20 public want;
     IERC20 public reward;
-    uint public rate; // wants per share
+    uint public rate; // wants per share. Need to correlate with want decimal place
     uint public shareCap;
 
     mapping(address => bool) public isWhitelisted;

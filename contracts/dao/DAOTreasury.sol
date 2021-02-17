@@ -6,7 +6,7 @@ import "../common/Address.sol";
 import "../common/SafeERC20.sol";
 
 contract DAOTreasury {
-  
+
     /* ========== STATE VARIABLES ========== */
 
     address public governance;
@@ -46,6 +46,17 @@ contract DAOTreasury {
     {
         require(_amount <= holdings(_token), "!insufficient");
         SafeERC20.safeTransfer(IERC20(_token), _destination, _amount);
+    }
+
+    function takeOutETH(
+        address payable _destination,
+        uint256 _amount
+    )
+        public
+        payable
+        onlyGov
+    {
+        _destination.transfer(_amount);
     }
 
     function setGov(address _governance)
