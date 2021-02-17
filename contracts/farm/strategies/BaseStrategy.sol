@@ -44,6 +44,10 @@ abstract contract BaseStrategy {
     address public controller;
     address public strategist;
 
+    uint public managementFee = 50;
+    uint public performanceFee = 500;
+    uint public constant max = 10000;
+
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
@@ -70,6 +74,16 @@ abstract contract BaseStrategy {
         controller = _controller;
     }
 
+    function setManagementFee(uint _managementFee) external {
+        require(msg.sender == governance, "!governance");
+        managementFee = _managementFee;
+    }
+
+    function setPerformanceFee(uint _performanceFee) external {
+        require(msg.sender == governance, "!governance");
+        performanceFee = _performanceFee;
+    }
+
     function setStrategist(address _strategist) external {
         require(msg.sender == governance || msg.sender == strategist, "!gs");
         strategist = _strategist;
@@ -84,10 +98,14 @@ abstract contract BaseStrategy {
     function harvest() external {
         _claimReward();
 
-        uint balance = IERC20(reward).balanceOf(address(this));
+        uint _balance = IERC20(reward).balanceOf(address(this));
+
+        uint256 _fee = _balance.mul(performanceFee).div(max);
+        IERC20(reward).safeTransfer(strategist, _fee);
+
         address _vault = Controller(controller).vaults(address(this));
         require(_vault != address(0), "!vault"); // additional protection so we don't burn the funds
-        IERC20(reward).safeTransfer(_vault, balance);
+        IERC20(reward).safeTransfer(_vault, _balance.sub(_fee));
     }
 
     // Controller only function for creating additional rewards from dust
@@ -108,9 +126,12 @@ abstract contract BaseStrategy {
             _amount = _amount.add(_balance);
         }
 
+        uint256 _fee = _amount.mul(managementFee).div(max);
+        IERC20(want).safeTransfer(strategist, _fee);
+
         address _vault = Controller(controller).vaults(address(this));
         require(_vault != address(0), "!vault"); // additional protection so we don't burn the funds
-        IERC20(want).safeTransfer(_vault, _amount);
+        IERC20(want).safeTransfer(_vault, _amount.sub(_fee));
     }
 
     // Withdraw all funds, normally used when migrating strategies
