@@ -6,6 +6,7 @@ import "../common/SafeMath.sol";
 import "../common/SafeERC20.sol";
 import "../common/ReentrancyGuard.sol";
 
+// A multistakingreward contract that allows stakers to recieve various reward tokens.
 contract MultiStakingRewards is ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -137,16 +138,6 @@ contract MultiStakingRewards is ReentrancyGuard {
         emit Withdrawn(msg.sender, amount);
     }
 
-    function getReward(address _rewardToken) public nonReentrant updateReward(_rewardToken, msg.sender) {
-        RewardPool storage pool = rewardPools[_rewardToken];
-        uint256 reward = pool.rewards[msg.sender];
-        if (reward > 0) {
-            pool.rewards[msg.sender] = 0;
-            pool.rewardToken.safeTransfer(msg.sender, reward);
-            emit RewardPaid(_rewardToken, msg.sender, reward);
-        }
-    }
-
     function getAllActiveRewards() public nonReentrant updateActiveRewards(msg.sender) {
         for (uint i = 0; i < activeRewardPools.length; i++) {
             RewardPool storage pool = rewardPools[activeRewardPools[i]];
@@ -189,7 +180,6 @@ contract MultiStakingRewards is ReentrancyGuard {
 
         emit RewardAdded(_rewardToken, _amount);
     }
-
 
     // Add new reward pool to list
     // NOTE: DO NOT add same pool twice while active.
@@ -236,6 +226,18 @@ contract MultiStakingRewards is ReentrancyGuard {
 
         activeRewardPools[_index] = activeRewardPools[activeRewardPools.length - 1];
         activeRewardPools.pop();
+    }
+
+    // Allow governance to rescue unclaimed inactive rewards
+    function rescue(address _rewardToken) public onlyGov {
+        for (uint i = 0; i < activeRewardPools.length; i++) {
+            if (activeRewardPools[i] == _rewardToken) {
+                // cannot withdraw active rewards
+                return;
+            }
+        }
+        uint _balance = IERC20(_rewardToken).balanceOf(address(this));
+        IERC20(_rewardToken).safeTransfer(governance, _balance);
     }
 
     /* ========== MODIFIERS ========== */
