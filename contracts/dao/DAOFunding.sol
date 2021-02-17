@@ -73,6 +73,7 @@ contract DAOFunding {
     // fund the dao and get shares
     function fund(uint _shares) external {
         require(shares[msg.sender].add(_shares) <= shareCap, "!over cap");
+        _updateReward(msg.sender);
 
         uint w = _shares.mul(rate);
         want.safeTransferFrom(msg.sender, address(this), w);
@@ -88,14 +89,20 @@ contract DAOFunding {
 
     // claim dao rewards based on shares
     function claim() external {
-        rewards[msg.sender] = earned(msg.sender);
-        rewardsPerSharePaid[msg.sender] = rewardsPerShareStored;
+        _updateReward(msg.sender);
 
         uint r = rewards[msg.sender];
         if (r > 0) {
             rewards[msg.sender] = 0;
             reward.safeTransfer(msg.sender, r);
         }
+    }
+
+    /* ========== INTERNAL FUNCTIONS ========== */
+
+    function _updateReward(address account) internal {
+        rewards[account] = earned(account);
+        rewardsPerSharePaid[account] = rewardsPerShareStored;
     }
 
     /* ========== VIEW FUNCTIONS ========== */
