@@ -4,11 +4,11 @@ WIP, functions might not work as expected.
 
 ## KOVAN
  - DefixToken - `0x06AeC05070f347836fF2a2984389a17E1Fcf0774`
- - StrategyController - `0xC594c44cE284289d6782A92e2050bA2Ba55Adc0b`
- - TokenMaster - `0x7b98c29615BC58e0Ce849EB4ABB79d221d1826E6`
- - TokenDistributor - `0x002155aEA6106d9fdb3F88cCDCfF1c332292BB0d`
- - DAOFunding - `0xe96E86B96c7fEb68B7938b8c3fE8b5dC6aFC8af4`
  - DAOTreasury - `0xcA1fe98f0F5F2657Ea1bb24571Da1d54e9069891`
+ - DAOFunding - `0xe96E86B96c7fEb68B7938b8c3fE8b5dC6aFC8af4`
+ - TokenDistributor - `0x002155aEA6106d9fdb3F88cCDCfF1c332292BB0d`
+ - TokenMaster - `0x7b98c29615BC58e0Ce849EB4ABB79d221d1826E6`
+ - StrategyController - `0xC594c44cE284289d6782A92e2050bA2Ba55Adc0b`
 
 ### USDT Compound Strategy
 - StrategyUSDTCompound - `0x068E7565F77b9cff46c66832F43E23Bc05a99BC8`
