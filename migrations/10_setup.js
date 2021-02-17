@@ -1,14 +1,15 @@
 // ============ Contracts ============
 
 const StrategyController = artifacts.require('StrategyController')
-const TokenMaster = artifacts.require('TokenMaster')
+const StrategyUSDTCompound = artifacts.require('StrategyUSDTCompound')
 const Vault = artifacts.require('Vault')
+const TokenMaster = artifacts.require('TokenMaster')
 
 // ============ Main Migration ============
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    deployVault(deployer, network),
+    setupContracts(deployer, network),
   ]);
 };
 
@@ -16,15 +17,12 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function deployVault(deployer, network) {
+async function setupContracts(deployer, network) {
+  const vault = await Vault.deployed();
+  const strategy = await StrategyUSDTCompound.deployed()
   const controller = await StrategyController.deployed();
   const tokenMaster = await TokenMaster.deployed();
 
-  await deployer.deploy(
-    Vault,
-    "0xb7a4F3E9097C08dA09517b5aB877F7a917224ede", // usdc
-    "0x61460874a7196d6a22D1eE4922473664b3E95270", // comp
-    controller.address,
-    tokenMaster.address
-  )
+  await controller.setStrategy(vault.address, strategy.address)
+  await tokenMaster.add("100", vault.address, true)
 }

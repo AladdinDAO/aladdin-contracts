@@ -34,14 +34,13 @@ contract TokenDistributor {
 
     constructor (
         address _token,
-        address _team,
         address _dao,
         address _treasury
     ) public {
         token = _token;
-        team = _team;
         dao = _dao;
         treasury = _treasury;
+        team = msg.sender;
         governance = msg.sender;
     }
 

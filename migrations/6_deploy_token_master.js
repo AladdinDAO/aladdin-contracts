@@ -19,5 +19,6 @@ async function deployTokenMaster(deployer, network) {
   const defixToken = await DefixToken.deployed();
   await deployer.deploy(TokenMaster, defixToken.address, "0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb") // deployer address
 
-  // Add token master as minter to defix token
+  const tokenMaster = await TokenMaster.deployed();
+  await defixToken.setMinter(tokenMaster.address, true)
 }

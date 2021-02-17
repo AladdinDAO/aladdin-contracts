@@ -3,19 +3,16 @@
 WIP, functions might not work as expected.
 
 ## KOVAN
- - StrategyController - `0xe6046D8C0064778c2D0306315d46c5A1c2d4D785`
- - TokenMaster - `0xb05898C29046F5Ee62013cA930493c5309C048ac`
- - DefixToken - `0x21fe87a0d0695a5701547fe61caf325ada0F923e`
- - DAOFunding - ``
- - DAOTreasury - `0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb`
-
-### USDC Compound Strategy
- - StrategyUSDCCompound - `0x2a0E4029557d97cB1b0A2a6F59f0B3B82A3073a5`
- - Vault - `0x4C0B328B8Cf335926C147Fb75B3A8EB503074102`
+ - DefixToken - `0x06AeC05070f347836fF2a2984389a17E1Fcf0774`
+ - StrategyController - `0xC594c44cE284289d6782A92e2050bA2Ba55Adc0b`
+ - TokenMaster - `0x7b98c29615BC58e0Ce849EB4ABB79d221d1826E6`
+ - TokenDistributor - `0x002155aEA6106d9fdb3F88cCDCfF1c332292BB0d`
+ - DAOFunding - `0xe96E86B96c7fEb68B7938b8c3fE8b5dC6aFC8af4`
+ - DAOTreasury - `0xcA1fe98f0F5F2657Ea1bb24571Da1d54e9069891`
 
 ### USDT Compound Strategy
-- StrategyUSDTCompound - `0xC241F942180AC337cA4AA55DC02054D257B0BD70`
-- Vault - `0xaBC33Cf1899dA4499C42176e1e88c721d6C4F4Fb`
+- StrategyUSDTCompound - `0x068E7565F77b9cff46c66832F43E23Bc05a99BC8`
+- Vault - `0x66EA293d1912C964BD880d5D9Fa429CAF752FF8F`
 
 ## Testing
 - Use Compound.finance on Kovan to get USDC, USDT from faucet for testing

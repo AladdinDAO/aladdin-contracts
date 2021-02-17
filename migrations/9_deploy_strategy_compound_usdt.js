@@ -1,13 +1,13 @@
 // ============ Contracts ============
 
 const StrategyController = artifacts.require('StrategyController')
-const StrategyUSDCCompound = artifacts.require('StrategyUSDCCompound')
+const StrategyUSDTCompound = artifacts.require('StrategyUSDTCompound')
 
 // ============ Main Migration ============
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    setupContracts(deployer, network),
+    deployStrategyUSDTCompound(deployer, network),
   ]);
 };
 
@@ -15,9 +15,11 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function setupContracts(deployer, network) {
+async function deployStrategyUSDTCompound(deployer, network) {
   const controller = await StrategyController.deployed();
 
-  // Add strategy and vault to controller
-  // Add vault to token master
+  await deployer.deploy(
+    StrategyUSDTCompound,
+    controller.address
+  )
 }
