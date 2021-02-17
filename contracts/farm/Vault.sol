@@ -7,7 +7,7 @@ import "../common/SafeERC20.sol";
 import "../common/SafeMath.sol";
 import "../common/Address.sol";
 
-interface Controller {
+interface IController {
     function withdraw(address, uint) external;
     function balanceOf(address) external view returns (uint);
     function farm(address, uint) external;
@@ -65,7 +65,7 @@ contract Vault is ERC20 {
 
   function balance() public view returns (uint) {
       return token.balanceOf(address(this))
-             .add(Controller(controller).balanceOf(address(this)));
+             .add(IController(controller).balanceOf(address(this)));
   }
 
   // Custom logic in here for how much the vault allows to be borrowed
@@ -114,7 +114,7 @@ contract Vault is ERC20 {
       uint b = token.balanceOf(address(this));
       if (b < r) {
           uint _withdraw = r.sub(b);
-          Controller(controller).withdraw(address(this), _withdraw);
+          IController(controller).withdraw(address(this), _withdraw);
           uint _after = token.balanceOf(address(this));
           uint _diff = _after.sub(b);
           if (_diff < _withdraw) {
@@ -162,13 +162,13 @@ contract Vault is ERC20 {
 
       uint amountLessFee = _bal.sub(keeperFee);
       token.safeTransfer(controller, amountLessFee);
-      Controller(controller).farm(address(this), amountLessFee);
+      IController(controller).farm(address(this), amountLessFee);
   }
 
   // Keepers call harvest() to claim rewards from strategy
   function harvest() external {
       uint _rewardBefore = rewardToken.balanceOf(address(this));
-      Controller(controller).harvest(address(this));
+      IController(controller).harvest(address(this));
       uint _rewardAfter = rewardToken.balanceOf(address(this));
 
       uint harvested = _rewardAfter.sub(_rewardBefore);

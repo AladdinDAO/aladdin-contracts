@@ -1,6 +1,6 @@
 // ============ Contracts ============
 
-const StrategyController = artifacts.require('StrategyController')
+const Controller = artifacts.require('Controller')
 const StrategyUSDTCompound = artifacts.require('StrategyUSDTCompound')
 
 // ============ Main Migration ============
@@ -16,7 +16,7 @@ module.exports = migration;
 // ============ Deploy Functions ============
 
 async function deployStrategyUSDTCompound(deployer, network) {
-  const controller = await StrategyController.deployed();
+  const controller = await Controller.deployed();
 
   await deployer.deploy(
     StrategyUSDTCompound,

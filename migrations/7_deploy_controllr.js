@@ -1,12 +1,12 @@
 // ============ Contracts ============
 
-const StrategyController = artifacts.require('StrategyController')
+const Controller = artifacts.require('Controller')
 
 // ============ Main Migration ============
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    deployStrategyController(deployer, network),
+    deployController(deployer, network),
   ]);
 };
 
@@ -14,6 +14,6 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function deployStrategyController(deployer, network) {
-  await deployer.deploy(StrategyController)
+async function deployController(deployer, network) {
+  await deployer.deploy(Controller)
 }

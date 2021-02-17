@@ -5,7 +5,7 @@ import "../../common/SafeMath.sol";
 import "../../common/Address.sol";
 import "../../common/SafeERC20.sol";
 
-interface Controller {
+interface IController {
     function vaults(address) external view returns (address);
     function strategies(address) external view returns (address);
     function rewards() external view returns (address);
@@ -103,7 +103,7 @@ abstract contract BaseStrategy {
         uint256 _fee = _balance.mul(performanceFee).div(max);
         IERC20(reward).safeTransfer(strategist, _fee);
 
-        address _vault = Controller(controller).vaults(address(this));
+        address _vault = IController(controller).vaults(address(this));
         require(_vault != address(0), "!vault"); // additional protection so we don't burn the funds
         IERC20(reward).safeTransfer(_vault, _balance.sub(_fee));
     }
@@ -129,7 +129,7 @@ abstract contract BaseStrategy {
         uint256 _fee = _amount.mul(managementFee).div(max);
         IERC20(want).safeTransfer(strategist, _fee);
 
-        address _vault = Controller(controller).vaults(address(this));
+        address _vault = IController(controller).vaults(address(this));
         require(_vault != address(0), "!vault"); // additional protection so we don't burn the funds
         IERC20(want).safeTransfer(_vault, _amount.sub(_fee));
     }
@@ -141,7 +141,7 @@ abstract contract BaseStrategy {
 
         balance = IERC20(want).balanceOf(address(this));
 
-        address _vault = Controller(controller).vaults(address(this));
+        address _vault = IController(controller).vaults(address(this));
         require(_vault != address(0), "!vault"); // additional protection so we don't burn the funds
         IERC20(want).safeTransfer(_vault, balance);
     }

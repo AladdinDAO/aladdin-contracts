@@ -47,7 +47,7 @@ interface OneSplitAudit {
         );
 }
 
-contract StrategyController {
+contract Controller {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
