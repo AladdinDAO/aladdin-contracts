@@ -26,6 +26,7 @@ contract MultiStakingRewards is ReentrancyGuard {
         uint256 rewardPerTokenStored;                       // current rewards per token based on total rewards and total staked
         mapping(address => uint256) userRewardPerTokenPaid; // amount of rewards per token already paided out to user
         mapping(address => uint256) rewards;                // amount of rewards user has earned
+        bool isActive;                                      // mark if the pool is active
     }
 
     /* ========== STATE VARIABLES ========== */
@@ -133,6 +134,18 @@ contract MultiStakingRewards is ReentrancyGuard {
         emit Withdrawn(msg.sender, amount);
     }
 
+    function getRewards(address _rewardToken) public nonReentrant updateReward(_rewardToken, msg.sender) {
+        RewardPool storage pool = rewardPools[_rewardToken];
+        require(pool.isActive, "pool is inactive");
+
+        uint256 reward = pool.rewards[msg.sender];
+        if (reward > 0) {
+            pool.rewards[msg.sender] = 0;
+            pool.rewardToken.safeTransfer(msg.sender, reward);
+            emit RewardPaid(address(pool.rewardToken), msg.sender, reward);
+        }
+    }
+
     function getAllActiveRewards() public nonReentrant updateActiveRewards(msg.sender) {
         for (uint i = 0; i < activeRewardPools.length; i++) {
             RewardPool storage pool = rewardPools[activeRewardPools[i]];
@@ -191,14 +204,15 @@ contract MultiStakingRewards is ReentrancyGuard {
           rewardRate: 0,
           rewardsDuration: _rewardsDuration,
           lastUpdateTime: 0,
-          rewardPerTokenStored: 0
+          rewardPerTokenStored: 0,
+          isActive: true
       });
 
       activeRewardPools.push(_rewardToken);
     }
 
     // Remove pool from active list
-    function inactivateRewardPoolByToken(address _rewardToken) public onlyGov {
+    function inactivateRewardPool(address _rewardToken) public onlyGov {
         // find the index
         uint indexToDelete = 0;
         bool found = false;
@@ -211,14 +225,19 @@ contract MultiStakingRewards is ReentrancyGuard {
         }
 
         require(found, "element not found");
-        inactivateRewardPoolByIndex(indexToDelete);
+        _inactivateRewardPool(indexToDelete);
     }
 
-    // Remove pool from active list
+    // In case the list gets so large and make iteration impossible
     function inactivateRewardPoolByIndex(uint256 _index) public onlyGov {
+        _inactivateRewardPool(_index);
+    }
+
+    function _inactivateRewardPool(uint256 _index) internal {
+        RewardPool storage pool = rewardPools[activeRewardPools[_index]];
+        pool.isActive = false;
         // we don't care about the ordering of the active reward pool array
         // so we can just swap the element to delete with the last element
-
         activeRewardPools[_index] = activeRewardPools[activeRewardPools.length - 1];
         activeRewardPools.pop();
     }
