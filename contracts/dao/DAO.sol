@@ -6,7 +6,7 @@ import "../common/Address.sol";
 import "../common/SafeERC20.sol";
 import "../common/ERC20.sol";
 
-// A funding contract that allows purchase of shares and claim of rewards
+// A funding contract that allows purchase of shares
 contract DAO is ERC20 {
     using SafeERC20 for IERC20;
     using Address for address;
@@ -38,7 +38,7 @@ contract DAO is ERC20 {
         public
         ERC20 (
           string(abi.encodePacked("Aladdin DAO")),
-          string(abi.encodePacked("ALDDAO"))
+          string(abi.encodePacked("aDAO"))
         )
     {
         want = IERC20(_want);

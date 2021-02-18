@@ -4,10 +4,6 @@ import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
 import "../common/SafeMath.sol";
 
-interface IDAOFunding {
-    function notifyRewardAmount(uint _amount) external;
-}
-
 // A token distributor that distribute tokens to addresses according to specific distribution rules
 contract TokenDistributor {
     using SafeMath for uint256;
@@ -54,7 +50,6 @@ contract TokenDistributor {
 
         uint _daoAmount = _balance.mul(daoAllocation).div(max);
         IERC20(token).safeTransfer(dao, _daoAmount);
-        IDAOFunding(dao).notifyRewardAmount(_daoAmount);
 
         uint _treasuryAmount = _balance.sub(_teamAmount).sub(_daoAmount);
         IERC20(token).safeTransfer(treasury, _treasuryAmount);
