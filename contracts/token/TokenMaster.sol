@@ -6,6 +6,9 @@ import "../common/SafeMath.sol";
 import "../common/Ownable.sol";
 import "./DefixToken.sol";
 
+// Forked from the original SushiMaster contract with the following changes:
+// - Add mechanism allow changing reward multpliers on a scheduled timeline
+
 contract TokenMaster is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;

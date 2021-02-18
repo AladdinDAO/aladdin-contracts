@@ -17,6 +17,7 @@ abstract contract RewardsDistributionRecipient {
     }
 }
 
+// Original Synthetix staking contract with only syntax change
 contract StakingRewards is RewardsDistributionRecipient, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -40,7 +41,6 @@ contract StakingRewards is RewardsDistributionRecipient, ReentrancyGuard {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        address _rewardsDistribution,
         address _rewardsToken,
         address _stakingToken
     ) public {

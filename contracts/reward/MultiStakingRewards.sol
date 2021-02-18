@@ -7,6 +7,9 @@ import "../common/SafeERC20.sol";
 import "../common/ReentrancyGuard.sol";
 
 // A multistakingreward contract that allows stakers to recieve various reward tokens.
+// Forked from the original Synthetix staking contract with following changes:
+// - Expand from single reward token to a list of reward tokens
+
 contract MultiStakingRewards is ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;

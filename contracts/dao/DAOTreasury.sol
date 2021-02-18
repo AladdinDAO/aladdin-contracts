@@ -5,6 +5,7 @@ import "../common/IERC20.sol";
 import "../common/Address.sol";
 import "../common/SafeERC20.sol";
 
+// A simple treasury that takes erc20 tokens and ETH
 contract DAOTreasury {
 
     /* ========== STATE VARIABLES ========== */

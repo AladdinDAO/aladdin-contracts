@@ -5,6 +5,7 @@ import "../common/IERC20.sol";
 import "../common/Address.sol";
 import "../common/SafeERC20.sol";
 
+// A funding contract that allows purchase of shares and claim of rewards
 contract DAOFunding {
     using SafeERC20 for IERC20;
     using Address for address;

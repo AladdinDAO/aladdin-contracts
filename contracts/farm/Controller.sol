@@ -47,6 +47,9 @@ interface OneSplitAudit {
         );
 }
 
+// Forked from the original yearn Controller with the following changes:
+// - change mapping of vault and strategy from token -> vault, token -> strategy to vault <-> strategy
+
 contract Controller {
     using SafeERC20 for IERC20;
     using Address for address;

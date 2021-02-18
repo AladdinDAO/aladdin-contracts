@@ -14,6 +14,11 @@ interface IController {
     function harvest(address) external;
 }
 
+// Forked from the original yearn Vault with the following changes:
+// - Introduce reward token of which the user can claim from the underlying strategy
+// - Keeper fees for farm and harvest
+// - Overriding transfer function to avoid reward token accumulation in TokenMaster (e.g when user stake Vault token into TokenMaster)
+
 contract Vault is ERC20 {
   using SafeERC20 for IERC20;
   using Address for address;
@@ -25,7 +30,6 @@ contract Vault is ERC20 {
   IERC20 public rewardToken;
 
   uint public availableMin = 9500;
-  uint public depositFeeMin = 0;
   uint public farmKeeperFeeMin = 10;
   uint public harvestKeeperFeeMin = 500;
   uint public constant max = 10000;
@@ -36,7 +40,6 @@ contract Vault is ERC20 {
 
   address public governance;
   address public controller;
-  address public depositFeeAddr;
   address public tokenMaster;
 
   /* ========== CONSTRUCTOR ========== */
@@ -57,7 +60,6 @@ contract Vault is ERC20 {
       rewardToken = IERC20(_rewardToken);
       controller = _controller;
       governance = msg.sender;
-      depositFeeAddr = msg.sender;
       tokenMaster = _tokenMaster;
   }
 
@@ -90,15 +92,11 @@ contract Vault is ERC20 {
       uint _pool = balance();
       token.safeTransferFrom(msg.sender, address(this), _amount);
 
-      uint depositFee = _amount.mul(depositFeeMin).div(max);
-      token.safeTransfer(depositFeeAddr, depositFee);
-
-      uint amountLessFee = _amount.sub(depositFee);
       uint shares = 0;
       if (_pool == 0) {
-        shares = amountLessFee;
+        shares = _amount;
       } else {
-        shares = (amountLessFee.mul(totalSupply())).div(_pool);
+        shares = (_amount.mul(totalSupply())).div(_pool);
       }
       _mint(msg.sender, shares);
   }
@@ -194,11 +192,6 @@ contract Vault is ERC20 {
       availableMin = _availableMin;
   }
 
-  function setDepositFeeMin(uint _depositFeeMin) external {
-      require(msg.sender == governance, "!governance");
-      depositFeeMin = _depositFeeMin;
-  }
-
   function setFarmKeeperFeeMin(uint _farmKeeperFeeMin) external {
       require(msg.sender == governance, "!governance");
       farmKeeperFeeMin = _farmKeeperFeeMin;
@@ -217,11 +210,6 @@ contract Vault is ERC20 {
   function setController(address _controller) public {
       require(msg.sender == governance, "!governance");
       controller = _controller;
-  }
-
-  function setDepositFeeAddr(address _depositFeeAddr) public {
-      require(msg.sender == governance, "!governance");
-      depositFeeAddr = _depositFeeAddr;
   }
 
   function setTokenMaster(address _tokenMaster) public {
