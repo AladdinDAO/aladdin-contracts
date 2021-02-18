@@ -4,7 +4,7 @@ import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
 import "../common/SafeMath.sol";
 
-// A token distributor that distribute tokens to addresses according to specific distribution rules
+// A simple token divider
 contract TokenDistributor {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -19,12 +19,12 @@ contract TokenDistributor {
     uint public teamAllocation = 4000;
 
     address public dao;
-    uint public daoAllocation = 4000;
+    uint public daoAllocation = 3000;
+
+    address public treasury;
+    uint public treasuryAllocation = 3000;
 
     uint public constant max = 10000;
-
-    // Remainder goes into treasury
-    address public treasury;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -51,7 +51,7 @@ contract TokenDistributor {
         uint _daoAmount = _balance.mul(daoAllocation).div(max);
         IERC20(token).safeTransfer(dao, _daoAmount);
 
-        uint _treasuryAmount = _balance.sub(_teamAmount).sub(_daoAmount);
+        uint _treasuryAmount = _balance.mul(treasuryAllocation).div(max);
         IERC20(token).safeTransfer(treasury, _treasuryAmount);
     }
 
