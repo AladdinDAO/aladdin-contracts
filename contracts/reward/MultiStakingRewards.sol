@@ -35,8 +35,8 @@ contract MultiStakingRewards is ReentrancyGuard {
 
     IERC20 public stakingToken;
 
-    uint256 private _totalSupply;
-    mapping(address => uint256) private _balances;
+    uint256 public totalSupply;
+    mapping(address => uint256) public balances;
 
     mapping(address => RewardPool) public rewardPools; // reward token to reward pool mapping
     address[] public activeRewardPools; // list of reward tokens that are distributing rewards
@@ -54,14 +54,6 @@ contract MultiStakingRewards is ReentrancyGuard {
         return activeRewardPools.length;
     }
 
-    function totalSupply() external view returns (uint256) {
-        return _totalSupply;
-    }
-
-    function balanceOf(address account) external view returns (uint256) {
-        return _balances[account];
-    }
-
     function lastTimeRewardApplicable(address _rewardToken) public view returns (uint256) {
         RewardPool storage pool = rewardPools[_rewardToken];
         return Math.min(block.timestamp, pool.periodFinish);
@@ -69,18 +61,18 @@ contract MultiStakingRewards is ReentrancyGuard {
 
     function rewardPerToken(address _rewardToken) public view returns (uint256) {
         RewardPool storage pool = rewardPools[_rewardToken];
-        if (_totalSupply == 0) {
+        if (totalSupply == 0) {
             return pool.rewardPerTokenStored;
         }
         return
             pool.rewardPerTokenStored.add(
-                lastTimeRewardApplicable(_rewardToken).sub(pool.lastUpdateTime).mul(pool.rewardRate).mul(1e18).div(_totalSupply)
+                lastTimeRewardApplicable(_rewardToken).sub(pool.lastUpdateTime).mul(pool.rewardRate).mul(1e18).div(totalSupply)
             );
     }
 
     function earned(address _rewardToken, address _account) public view returns (uint256) {
         RewardPool storage pool = rewardPools[_rewardToken];
-        return _balances[_account].mul(rewardPerToken(_rewardToken).sub(pool.userRewardPerTokenPaid[_account])).div(1e18).add(pool.rewards[_account]);
+        return balances[_account].mul(rewardPerToken(_rewardToken).sub(pool.userRewardPerTokenPaid[_account])).div(1e18).add(pool.rewards[_account]);
     }
 
     function getRewardForDuration(address _rewardToken) external view returns (uint256) {
@@ -127,16 +119,16 @@ contract MultiStakingRewards is ReentrancyGuard {
 
     function stake(uint256 amount) external nonReentrant updateActiveRewards(msg.sender) {
         require(amount > 0, "Cannot stake 0");
-        _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
+        totalSupply = totalSupply.add(amount);
+        balances[msg.sender] = balances[msg.sender].add(amount);
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
     }
 
     function withdraw(uint256 amount) public nonReentrant updateActiveRewards(msg.sender) {
         require(amount > 0, "Cannot withdraw 0");
-        _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = _balances[msg.sender].sub(amount);
+        totalSupply = totalSupply.sub(amount);
+        balances[msg.sender] = balances[msg.sender].sub(amount);
         stakingToken.safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
@@ -154,7 +146,7 @@ contract MultiStakingRewards is ReentrancyGuard {
     }
 
     function exit() external {
-        withdraw(_balances[msg.sender]);
+        withdraw(balances[msg.sender]);
         getAllActiveRewards();
     }
 
