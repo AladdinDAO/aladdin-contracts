@@ -1,7 +1,6 @@
 pragma solidity 0.6.12;
 
 import "../common/IERC20.sol";
-import "../common/Context.sol";
 import "../common/ERC20.sol";
 import "../common/SafeERC20.sol";
 import "../common/SafeMath.sol";
