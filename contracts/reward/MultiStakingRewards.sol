@@ -30,7 +30,7 @@ contract MultiStakingRewards is ReentrancyGuard {
 
     /* ========== STATE VARIABLES ========== */
 
-    address public rewardsDistribution;
+    mapping(address => bool) public rewardsDistribution;
     address public governance;
 
     IERC20 public stakingToken;
@@ -44,7 +44,7 @@ contract MultiStakingRewards is ReentrancyGuard {
     /* ========== CONSTRUCTOR ========== */
 
     constructor() public {
-        rewardsDistribution = msg.sender;
+        rewardsDistribution[msg.sender] = true;
         governance = msg.sender;
     }
 
@@ -235,6 +235,18 @@ contract MultiStakingRewards is ReentrancyGuard {
         IERC20(_rewardToken).safeTransfer(governance, _balance);
     }
 
+    /* ========== RESTRICTED FUNCTIONS ========== */
+
+    function setRewardsDistribution(address _distributor, bool _status) external {
+        require(msg.sender == governance, "!governance");
+        rewardsDistribution[_distributor] = _status;
+    }
+
+    function setGov(address _gov) external {
+        require(msg.sender == governance, "!governance");
+        governance = _gov;
+    }
+
     /* ========== MODIFIERS ========== */
 
     modifier updateActiveRewards(address _account) {
@@ -269,7 +281,7 @@ contract MultiStakingRewards is ReentrancyGuard {
     }
 
     modifier onlyRewardsDistribution() {
-        require(msg.sender == rewardsDistribution, "!rewardsDistribution");
+        require(rewardsDistribution[msg.sender] == true, "!rewardsDistribution");
         _;
     }
 
