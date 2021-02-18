@@ -4,9 +4,10 @@ import "../common/SafeMath.sol";
 import "../common/IERC20.sol";
 import "../common/Address.sol";
 import "../common/SafeERC20.sol";
+import "../common/ERC20.sol";
 
 // A funding contract that allows purchase of shares and claim of rewards
-contract DAO {
+contract DAO is ERC20 {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -14,7 +15,6 @@ contract DAO {
     /* ========== STATE VARIABLES ========== */
 
     address public governance;
-    address public rewardDistributor;
 
     IERC20 public want;
     IERC20 public reward;
@@ -25,12 +25,6 @@ contract DAO {
     address[] public whitelist;
 
     address[] public daoMembers;
-    mapping(address => uint) public shares;
-    uint public totalShares;
-
-    uint public rewardsPerShareStored;
-    mapping(address => uint256) public rewardsPerSharePaid;
-    mapping(address => uint256) public rewards;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -42,6 +36,10 @@ contract DAO {
         address[] memory _whitelist
     )
         public
+        ERC20 (
+          string(abi.encodePacked("Aladdin DAO")),
+          string(abi.encodePacked("ALDDAO"))
+        )
     {
         want = IERC20(_want);
         reward = IERC20(_reward);
@@ -54,7 +52,6 @@ contract DAO {
         }
 
         governance = msg.sender;
-        rewardDistributor = msg.sender;
     }
 
     /* ========== MODIFIER ========== */
@@ -64,46 +61,21 @@ contract DAO {
         _;
     }
 
-    modifier onlyDistributor() {
-        require(msg.sender == rewardDistributor);
-        _;
-    }
-
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     // fund the dao and get shares
     function fund(uint _shares) external {
-        require(shares[msg.sender].add(_shares) <= shareCap, "!over cap");
-        _updateReward(msg.sender);
+        require(balanceOf(msg.sender).add(_shares) <= shareCap, "!over cap");
 
         uint w = _shares.mul(rate);
         want.safeTransferFrom(msg.sender, address(this), w);
 
         // add new member to dao list
-        if (shares[msg.sender] == 0) {
+        if (balanceOf(msg.sender) == 0) {
             daoMembers.push(msg.sender);
         }
 
-        shares[msg.sender] = shares[msg.sender].add(_shares);
-        totalShares = totalShares.add(_shares);
-    }
-
-    // claim dao rewards based on shares
-    function claim() external {
-        _updateReward(msg.sender);
-
-        uint r = rewards[msg.sender];
-        if (r > 0) {
-            rewards[msg.sender] = 0;
-            reward.safeTransfer(msg.sender, r);
-        }
-    }
-
-    /* ========== INTERNAL FUNCTIONS ========== */
-
-    function _updateReward(address account) internal {
-        rewards[account] = earned(account);
-        rewardsPerSharePaid[account] = rewardsPerShareStored;
+        _mint(msg.sender, _shares);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
@@ -114,10 +86,6 @@ contract DAO {
         returns (uint)
     {
         return IERC20(_token).balanceOf(address(this));
-    }
-
-    function earned(address _account) public view returns (uint) {
-        return shares[_account].mul(rewardsPerShareStored.sub(rewardsPerSharePaid[_account])).div(1e18).add(rewards[_account]);
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -134,22 +102,11 @@ contract DAO {
         SafeERC20.safeTransfer(IERC20(_token), _destination, _amount);
     }
 
-    function notifyRewardAmount(uint _amount) public onlyDistributor {
-        rewardsPerShareStored = rewardsPerShareStored.add(_amount.div(totalShares));
-    }
-
     function setGov(address _governance)
         public
         onlyGov
     {
         governance = _governance;
-    }
-
-    function setDistributor(address _rewardDistributor)
-        public
-        onlyGov
-    {
-        rewardDistributor = _rewardDistributor;
     }
 
     function setWant(address _want)
