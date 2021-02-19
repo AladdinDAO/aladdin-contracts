@@ -24,8 +24,6 @@ contract DAO is ERC20 {
     mapping(address => bool) public isWhitelisted;
     address[] public whitelist;
 
-    address[] public daoMembers;
-
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
@@ -69,11 +67,6 @@ contract DAO is ERC20 {
 
         uint w = _shares.mul(rate);
         want.safeTransferFrom(msg.sender, address(this), w);
-
-        // add new member to dao list
-        if (balanceOf(msg.sender) == 0) {
-            daoMembers.push(msg.sender);
-        }
 
         _mint(msg.sender, _shares);
     }

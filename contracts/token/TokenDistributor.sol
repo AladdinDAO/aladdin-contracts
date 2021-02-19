@@ -2,94 +2,85 @@ pragma solidity 0.6.12;
 
 import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
-import "../common/SafeMath.sol";
 
-// A simple token divider
+// TokenDistributor allows Fund Managers to distribute tokens
 contract TokenDistributor {
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */
 
-    address public token;
-
     address public governance;
-
-    address public team;
-    uint public teamAllocation = 4000;
-
-    address public dao;
-    uint public daoAllocation = 3000;
-
-    address public treasury;
-    uint public treasuryAllocation = 3000;
-
-    uint public constant max = 10000;
+    mapping(address => bool) public fundManager;
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor (
-        address _token,
-        address _dao,
-        address _treasury
-    ) public {
-        token = _token;
-        dao = _dao;
-        treasury = _treasury;
-        team = msg.sender;
+    constructor(
+        address[] memory _fundManagers
+    )
+        public
+    {
         governance = msg.sender;
-    }
 
-    /* ========== MUTATIVE FUNCTIONS ========== */
-
-    function distribute() public {
-        uint _balance = IERC20(token).balanceOf(address(this));
-
-        uint _teamAmount = _balance.mul(teamAllocation).div(max);
-        IERC20(token).safeTransfer(team, _teamAmount);
-
-        uint _daoAmount = _balance.mul(daoAllocation).div(max);
-        IERC20(token).safeTransfer(dao, _daoAmount);
-
-        uint _treasuryAmount = _balance.mul(treasuryAllocation).div(max);
-        IERC20(token).safeTransfer(treasury, _treasuryAmount);
+        for(uint256 i = 0; i < _fundManagers.length; i++) {
+            fundManager[_fundManagers[i]] = true;
+        }
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function setGovernance(address _governance) public {
-        require(msg.sender == governance, "!governance");
-        governance = _governance;
+    function addFundManager(address _address)
+        external
+        onlyGov
+    {
+        fundManager[_address] = true;
     }
 
-    function setTeam(address _team) public {
-        require(msg.sender == governance, "!governance");
-        team = _team;
+    function removeFundManager(address _address)
+        external
+        onlyGov
+    {
+        fundManager[_address] = false;
     }
 
-    function setDao(address _dao) public {
-        require(msg.sender == governance, "!governance");
-        dao = _dao;
+    /* ========== MUTATIVE FUNCTIONS ========== */
+
+    function distributeTokens(
+        address[] calldata _recipients,
+        IERC20[] calldata _tokens,
+        uint256[] calldata _amounts
+    )
+        external
+        onlyFundManager
+    {
+        uint256 len = _recipients.length;
+        require(len > 0, "Must choose recipients");
+        require(len == _tokens.length, "Mismatching inputs");
+        require(len == _amounts.length, "Mismatching inputs");
+
+        for(uint i = 0; i < len; i++){
+            uint256 amount = _amounts[i];
+            IERC20 rewardToken = _tokens[i];
+            address recipient = _recipients[i];
+            // Send the RewardToken to recipient
+            rewardToken.safeTransferFrom(msg.sender, recipient, amount);
+
+            emit DistributedToken(msg.sender, recipient, address(rewardToken), amount);
+        }
     }
 
-    function setTreasury(address _treasury) public {
+    /* ========== MODIFIERS ========== */
+
+    modifier onlyGov() {
         require(msg.sender == governance, "!governance");
-        treasury = _treasury;
+        _;
     }
 
-    function setTeamAllocation(uint _teamAllocation) public {
-        require(msg.sender == governance, "!governance");
-        teamAllocation = _teamAllocation;
+    modifier onlyFundManager() {
+        require(fundManager[msg.sender] == true, "!manager");
+        _;
     }
 
-    function setDaoAllocation(uint _daoAllocation) public {
-        require(msg.sender == governance, "!governance");
-        daoAllocation = _daoAllocation;
-    }
+    /* ========== EVENTS ========== */
 
-    function rescue(address _token) public {
-        require(msg.sender == governance, "!governance");
-        uint _balance = IERC20(_token).balanceOf(address(this));
-        IERC20(_token).safeTransfer(governance, _balance);
-    }
+    event DistributedToken(address funder, address recipient, address rewardToken, uint256 amount);
 }

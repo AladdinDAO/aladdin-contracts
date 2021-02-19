@@ -244,12 +244,12 @@ contract MultiStakingRewards is ReentrancyGuard {
 
     // Allow governance to rescue unclaimed inactive rewards
     function rescue(address _rewardToken) public onlyGov {
-        for (uint i = 0; i < activeRewardPools.length; i++) {
-            if (activeRewardPools[i] == _rewardToken) {
-                // cannot withdraw active rewards
-                return;
-            }
+        RewardPool storage pool = rewardPools[_rewardToken];
+        if (pool.isActive) {
+            // cannot withdraw active rewards
+            return;
         }
+
         uint _balance = IERC20(_rewardToken).balanceOf(address(this));
         IERC20(_rewardToken).safeTransfer(governance, _balance);
     }
