@@ -42,6 +42,15 @@ contract TokenDistributor {
         fundManager[_address] = false;
     }
 
+    // Allow governance to rescue rewards
+    function rescue(address _rewardToken)
+        public
+        onlyGov
+    {
+        uint _balance = IERC20(_rewardToken).balanceOf(address(this));
+        IERC20(_rewardToken).safeTransfer(governance, _balance);
+    }
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function distributeTokens(
