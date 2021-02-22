@@ -44,7 +44,8 @@ contract MultiStakingRewards is ReentrancyGuard {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(address _rewardsDistribution) public {
+    constructor(address _stakingToken, address _rewardsDistribution) public {
+        stakingToken = IERC20(_stakingToken);
         rewardsDistribution = _rewardsDistribution;
         governance = msg.sender;
     }

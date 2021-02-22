@@ -1,12 +1,12 @@
 // ============ Contracts ============
 
-const TokenDistributor = artifacts.require('TokenDistributor')
+const RewardDistributor = artifacts.require('RewardDistributor')
 
 // ============ Main Migration ============
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    deployTokenDistributor(deployer, network),
+    deployRewardDistributor(deployer, network),
   ]);
 };
 
@@ -14,9 +14,9 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function deployTokenDistributor(deployer, network) {
+async function deployRewardDistributor(deployer, network) {
   await deployer.deploy(
-    TokenDistributor,
+    RewardDistributor,
     ["0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb"] // deployer
   )
 }

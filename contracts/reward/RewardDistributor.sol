@@ -7,8 +7,8 @@ interface IRewardsDistributionRecipient {
     function notifyRewardAmount(address _rewardToken, uint256 reward) external;
 }
 
-// RewardsDistributor allows Fund Managers to send rewards
-contract RewardsDistributor {
+// RewardDistributor allows Fund Managers to send rewards
+contract RewardDistributor {
     using SafeERC20 for IERC20;
 
     /* ========== STATE VARIABLES ========== */

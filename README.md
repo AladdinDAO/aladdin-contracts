@@ -19,16 +19,18 @@ Contracts for funding and treasury
 ## Deployments
 
 ### KOVAN
- - DefixToken - `0x06AeC05070f347836fF2a2984389a17E1Fcf0774`
- - DAOTreasury - `0xcA1fe98f0F5F2657Ea1bb24571Da1d54e9069891`
- - DAOFunding - `0xe96E86B96c7fEb68B7938b8c3fE8b5dC6aFC8af4`
- - TokenDistributor - `0x002155aEA6106d9fdb3F88cCDCfF1c332292BB0d`
- - TokenMaster - `0x7b98c29615BC58e0Ce849EB4ABB79d221d1826E6`
- - StrategyController - `0xC594c44cE284289d6782A92e2050bA2Ba55Adc0b`
+ - DefixToken - `0x09B7C22E7e5CC7F5BE68d2Bd85d85B00101C0ee8`
+ - Treasury - `0xdE5e7fc0fE5C5F88E86D3345289d2fADf95BEa1a`
+ - DAO - `0x4767588294DDB134833Bb376EEA3d872DFEDe000`
+ - TokenDistributor - `0x4151F3ca7cdf08862EC951ddcB2b2Fc284d48F6e`
+ - TokenMaster - `0xcedF9fBe161B75d8F2822C89a18c919d36369F98`
+ - StrategyController - `0x6e19B0D99bE87B511fe1612e8097D32912348AEF`
+ - RewardDistributor - `0x3064c7E6ff89998eb3Ad9768D23090db8f4C57a5`
+ - MultiStakingRewards - `0x145191C725DB2ab84683333071A417E244736A9D`
 
 ### USDT Compound Strategy
-- StrategyUSDTCompound - `0x068E7565F77b9cff46c66832F43E23Bc05a99BC8`
-- Vault - `0x66EA293d1912C964BD880d5D9Fa429CAF752FF8F`
+- StrategyUSDTCompound - `0xfFe1CC3FaDBDbC4bC5ca85539e8e7327A46c7Ad0`
+- Vault - `0xB954c52E3377E92c379F033326a1Df5797260692`
 
 ### Test Tokens
 - Use Compound.finance on Kovan to get USDC, USDT from faucet for testing

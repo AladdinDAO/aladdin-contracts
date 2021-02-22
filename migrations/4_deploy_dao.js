@@ -1,13 +1,13 @@
 // ============ Contracts ============
 
 const DefixToken = artifacts.require('DefixToken')
-const DAOFunding = artifacts.require('DAOFunding')
+const DAO = artifacts.require('DAO')
 
 // ============ Main Migration ============
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    deployDAOFunding(deployer, network),
+    deployDAO(deployer, network),
   ]);
 };
 
@@ -15,11 +15,11 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function deployDAOFunding(deployer, network) {
+async function deployDAO(deployer, network) {
   const defix = await DefixToken.deployed()
 
   await deployer.deploy(
-    DAOFunding,
+    DAO,
     "0x07de306FF27a2B630B1141956844eB1552B956B5", // USDT
     defix.address,
     "10",

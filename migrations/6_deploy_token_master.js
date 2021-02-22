@@ -2,6 +2,7 @@
 
 const DefixToken = artifacts.require('DefixToken')
 const TokenMaster = artifacts.require('TokenMaster')
+const TokenDistributor = artifacts.require('TokenDistributor')
 
 // ============ Main Migration ============
 
@@ -17,7 +18,8 @@ module.exports = migration;
 
 async function deployTokenMaster(deployer, network) {
   const defixToken = await DefixToken.deployed();
-  await deployer.deploy(TokenMaster, defixToken.address, "0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb") // deployer address
+  const tokenDistributor = await TokenDistributor.deployed();
+  await deployer.deploy(TokenMaster, defixToken.address, tokenDistributor.address)
 
   const tokenMaster = await TokenMaster.deployed();
   await defixToken.setMinter(tokenMaster.address, true)
