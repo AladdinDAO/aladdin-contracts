@@ -73,6 +73,10 @@ contract DAO is ERC20 {
 
     /* ========== VIEW FUNCTIONS ========== */
 
+    function whitelistLength() external view returns (uint256) {
+        return whitelist.length;
+    }
+
     function holdings(address _token)
         public
         view
