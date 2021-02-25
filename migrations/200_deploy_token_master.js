@@ -1,6 +1,6 @@
 // ============ Contracts ============
 
-const DefixToken = artifacts.require('DefixToken')
+const ALDToken = artifacts.require('ALDToken')
 const TokenMaster = artifacts.require('TokenMaster')
 const TokenDistributor = artifacts.require('TokenDistributor')
 
@@ -17,10 +17,10 @@ module.exports = migration;
 // ============ Deploy Functions ============
 
 async function deployTokenMaster(deployer, network) {
-  const defixToken = await DefixToken.deployed();
+  const aldToken = await ALDToken.deployed();
   const tokenDistributor = await TokenDistributor.deployed();
-  await deployer.deploy(TokenMaster, defixToken.address, tokenDistributor.address)
+  await deployer.deploy(TokenMaster, aldToken.address, tokenDistributor.address)
 
   const tokenMaster = await TokenMaster.deployed();
-  await defixToken.setMinter(tokenMaster.address, true)
+  await aldToken.setMinter(tokenMaster.address, true)
 }

@@ -17,7 +17,6 @@ contract DAO is ERC20 {
     address public governance;
 
     IERC20 public want;
-    IERC20 public reward;
     uint public rate; // wants per share. Need to correlate with want decimal place
     uint public shareCap;
 
@@ -28,7 +27,6 @@ contract DAO is ERC20 {
 
     constructor(
         address _want,
-        address _reward,
         uint _rate,
         uint _shareCap,
         address[] memory _whitelist
@@ -40,7 +38,6 @@ contract DAO is ERC20 {
         )
     {
         want = IERC20(_want);
-        reward = IERC20(_reward);
         rate = _rate;
         shareCap = _shareCap;
         whitelist = _whitelist;
@@ -111,13 +108,6 @@ contract DAO is ERC20 {
         onlyGov
     {
         want = IERC20(_want);
-    }
-
-    function setReward(address _reward)
-        public
-        onlyGov
-    {
-        reward = IERC20(_reward);
     }
 
     function setRate(uint _rate)

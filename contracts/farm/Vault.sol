@@ -50,8 +50,8 @@ contract Vault is ERC20 {
       address _tokenMaster)
       public
       ERC20 (
-        string(abi.encodePacked("vault ", ERC20(_token).name())),
-        string(abi.encodePacked("v", ERC20(_token).symbol())
+        string(abi.encodePacked("aladdin ", ERC20(_token).name())),
+        string(abi.encodePacked("ald", ERC20(_token).symbol())
       )
   ) {
       _setupDecimals(ERC20(_token).decimals());

@@ -4,7 +4,7 @@ import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
 import "../common/SafeMath.sol";
 import "../common/Ownable.sol";
-import "./DefixToken.sol";
+import "./ALDToken.sol";
 
 // Forked from the original SushiMaster contract with the following changes:
 // - Add mechanism allow changing reward multpliers on a scheduled timeline
@@ -20,13 +20,13 @@ contract TokenMaster is Ownable {
         uint256 amount;     // How many LP tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
         //
-        // We do some fancy math here. Basically, any point in time, the amount of DEFIXs
+        // We do some fancy math here. Basically, any point in time, the amount of ALDs
         // entitled to a user but is pending to be distributed is:
         //
-        //   pending reward = (user.amount * pool.accDefixPerShare) - user.rewardDebt
+        //   pending reward = (user.amount * pool.accALDPerShare) - user.rewardDebt
         //
         // Whenever a user deposits or withdraws LP tokens to a pool. Here's what happens:
-        //   1. The pool's `accDefixPerShare` (and `lastRewardBlock`) gets updated.
+        //   1. The pool's `accALDPerShare` (and `lastRewardBlock`) gets updated.
         //   2. User receives the pending reward sent to his/her address.
         //   3. User's `amount` gets updated.
         //   4. User's `rewardDebt` gets updated.
@@ -35,23 +35,23 @@ contract TokenMaster is Ownable {
     // Info of each pool.
     struct PoolInfo {
         IERC20 lpToken;           // Address of LP token contract.
-        uint256 allocPoint;       // How many allocation points assigned to this pool. DEFIXs to distribute per block.
-        uint256 lastRewardBlock;  // Last block number that DEFIXs distribution occurs.
-        uint256 accDefixPerShare; // Accumulated DEFIXs per share, times 1e12. See below.
+        uint256 allocPoint;       // How many allocation points assigned to this pool. ALDs to distribute per block.
+        uint256 lastRewardBlock;  // Last block number that ALDs distribution occurs.
+        uint256 accALDPerShare; // Accumulated ALDs per share, times 1e12. See below.
     }
 
     /* ========== STATE VARIABLES ========== */
 
-    // The DEFIX TOKEN!
-    DefixToken public defix;
+    // The ALD TOKEN!
+    ALDToken public ALD;
     // token distributor address.
     address public tokenDistributor;
 
-    // The block number when DEFIX mining starts.
+    // The block number when ALD mining starts.
     uint256 public startBlock;
-    // DEFIX tokens created per block.
-    uint256 public defixPerBlock = 10;
-    // Bonus muliplier for early defix makers.
+    // ALD tokens created per block.
+    uint256 public ALDPerBlock = 10;
+    // Bonus muliplier for early ALD makers.
     uint256[] public REWARD_MULTIPLIER = [1000, 100, 10, 1, 0];
     // Reward muliplier duration
     uint256 public BLOCKS_PER_MULTIPLIER = 5760; // 1 day
@@ -74,10 +74,10 @@ contract TokenMaster is Ownable {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        DefixToken _defix,
+        ALDToken _ALD,
         address _tokenDistributor
     ) public {
-        defix = _defix;
+        ALD = _ALD;
         tokenDistributor = _tokenDistributor;
         startBlock = block.number;
 
@@ -114,38 +114,38 @@ contract TokenMaster is Ownable {
         return result;
     }
 
-    // View function to see pending DEFIXs on frontend.
-    function pendingDefix(uint256 _pid, address _user) external view returns (uint256) {
+    // View function to see pending ALDs on frontend.
+    function pendingALD(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
-        uint256 accDefixPerShare = pool.accDefixPerShare;
+        uint256 accALDPerShare = pool.accALDPerShare;
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-            uint256 defixReward = multiplier.mul(defixPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-            accDefixPerShare = accDefixPerShare.add(defixReward.mul(1e12).div(lpSupply));
+            uint256 ALDReward = multiplier.mul(ALDPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+            accALDPerShare = accALDPerShare.add(ALDReward.mul(1e12).div(lpSupply));
         }
-        return user.amount.mul(accDefixPerShare).div(1e12).sub(user.rewardDebt);
+        return user.amount.mul(accALDPerShare).div(1e12).sub(user.rewardDebt);
     }
 
     /* ========== USER MUTATIVE FUNCTONS ========== */
 
-    // Deposit LP tokens to TokenMaster for DEFIX allocation.
+    // Deposit LP tokens to TokenMaster for ALD allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
         if (user.amount > 0) {
-            uint256 pending = user.amount.mul(pool.accDefixPerShare).div(1e12).sub(user.rewardDebt);
+            uint256 pending = user.amount.mul(pool.accALDPerShare).div(1e12).sub(user.rewardDebt);
             if(pending > 0) {
-                safeDefixTransfer(msg.sender, pending);
+                safeALDTransfer(msg.sender, pending);
             }
         }
         if(_amount > 0) {
             pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
             user.amount = user.amount.add(_amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accDefixPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accALDPerShare).div(1e12);
         emit Deposit(msg.sender, _pid, _amount);
     }
 
@@ -155,15 +155,15 @@ contract TokenMaster is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool(_pid);
-        uint256 pending = user.amount.mul(pool.accDefixPerShare).div(1e12).sub(user.rewardDebt);
+        uint256 pending = user.amount.mul(pool.accALDPerShare).div(1e12).sub(user.rewardDebt);
         if(pending > 0) {
-            safeDefixTransfer(msg.sender, pending);
+            safeALDTransfer(msg.sender, pending);
         }
         if(_amount > 0) {
             user.amount = user.amount.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accDefixPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accALDPerShare).div(1e12);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
@@ -200,22 +200,22 @@ contract TokenMaster is Ownable {
             return;
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 defixReward = multiplier.mul(defixPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        defix.mint(tokenDistributor, defixReward.div(10));
-        defix.mint(address(this), defixReward);
-        pool.accDefixPerShare = pool.accDefixPerShare.add(defixReward.mul(1e12).div(lpSupply));
+        uint256 ALDReward = multiplier.mul(ALDPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+        ALD.mint(tokenDistributor, ALDReward.div(10));
+        ALD.mint(address(this), ALDReward);
+        pool.accALDPerShare = pool.accALDPerShare.add(ALDReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }
 
     /* ========== INTERNAL FUNCTONS ========== */
 
-    // Safe defix transfer function, just in case if rounding error causes pool to not have enough DEFIXs.
-    function safeDefixTransfer(address _to, uint256 _amount) internal {
-        uint256 defixBal = defix.balanceOf(address(this));
-        if (_amount > defixBal) {
-            defix.transfer(_to, defixBal);
+    // Safe ALD transfer function, just in case if rounding error causes pool to not have enough ALDs.
+    function safeALDTransfer(address _to, uint256 _amount) internal {
+        uint256 ALDBal = ALD.balanceOf(address(this));
+        if (_amount > ALDBal) {
+            ALD.transfer(_to, ALDBal);
         } else {
-            defix.transfer(_to, _amount);
+            ALD.transfer(_to, _amount);
         }
     }
 
@@ -238,11 +238,11 @@ contract TokenMaster is Ownable {
             lpToken: _lpToken,
             allocPoint: _allocPoint,
             lastRewardBlock: lastRewardBlock,
-            accDefixPerShare: 0
+            accALDPerShare: 0
         }));
     }
 
-    // Update the given pool's DEFIX allocation point. Can only be called by the owner.
+    // Update the given pool's ALD allocation point. Can only be called by the owner.
     function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();

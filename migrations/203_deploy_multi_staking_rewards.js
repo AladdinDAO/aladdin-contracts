@@ -1,6 +1,6 @@
 // ============ Contracts ============
 
-const DefixToken = artifacts.require('DefixToken')
+const ALDToken = artifacts.require('ALDToken')
 const RewardDistributor = artifacts.require('RewardDistributor')
 const MultiStakingRewards = artifacts.require('MultiStakingRewards')
 
@@ -17,12 +17,12 @@ module.exports = migration;
 // ============ Deploy Functions ============
 
 async function deployMultiStakingRewards(deployer, network) {
-  const defixToken = await DefixToken.deployed();
+  const aldToken = await ALDToken.deployed();
   const rewardDistributor = await RewardDistributor.deployed();
 
   await deployer.deploy(
     MultiStakingRewards,
-    defixToken.address,
+    aldToken.address,
     rewardDistributor.address
   )
 }

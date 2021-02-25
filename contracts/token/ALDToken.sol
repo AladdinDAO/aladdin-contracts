@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 import "../common/ERC20.sol";
 
 // Standard ERC20 token with minter role
-contract DefixToken is ERC20("DefixToken", "DEFIX") {
+contract ALDToken is ERC20("Aladdin DAO Token", "ALD") {
     address public governance;
     mapping (address => bool) public isMinter;
 
