@@ -5,13 +5,13 @@
 ![Overview](/diagram.png)
 
 ### Token
-Contracts for the LAMP token and its distribution.
+Contracts for the ALD token and its distribution.
 
 ### Farm
 Contracts for yearn style strategies. Strategies does not auto sell rewards for underlying, but allow users to claim them instead
 
 ### Reward
-Staking reward contracts for LAMP token.
+Staking reward contracts for ALD token.
 
 ### DAO
 Contracts for funding and treasury
