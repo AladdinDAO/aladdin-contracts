@@ -6,6 +6,10 @@ import "../common/SafeMath.sol";
 import "../common/SafeERC20.sol";
 import "../common/ReentrancyGuard.sol";
 
+interface IWrappedERC20 {
+    function unwrap(address _to, uint _amount) external;
+}
+
 // A multistakingreward contract that allows stakers to recieve various reward tokens.
 // Forked from the original Synthetix staking contract with following changes:
 // - Expand from single reward token to a list of reward tokens
@@ -35,6 +39,7 @@ contract MultiStakingRewards is ReentrancyGuard {
     address public governance;
 
     IERC20 public stakingToken;
+    IWrappedERC20 public wStakingToken; // wrapped stakingToken is used to reward stakers with more stakingToken
 
     uint256 public totalSupply;
     mapping(address => uint256) public balances;
@@ -44,8 +49,9 @@ contract MultiStakingRewards is ReentrancyGuard {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(address _stakingToken, address _rewardsDistribution) public {
+    constructor(address _stakingToken, address _wStakingToken, address _rewardsDistribution) public {
         stakingToken = IERC20(_stakingToken);
+        wStakingToken = IWrappedERC20(_wStakingToken);
         rewardsDistribution = _rewardsDistribution;
         governance = msg.sender;
     }
@@ -142,7 +148,12 @@ contract MultiStakingRewards is ReentrancyGuard {
         uint256 reward = pool.rewards[msg.sender];
         if (reward > 0) {
             pool.rewards[msg.sender] = 0;
-            pool.rewardToken.safeTransfer(msg.sender, reward);
+            // If reward token is wrapped version of staking token, auto unwrap into underlying to user
+            if (address(pool.rewardToken) == address(wStakingToken)) {
+                wStakingToken.unwrap(msg.sender, reward);
+            } else {
+                pool.rewardToken.safeTransfer(msg.sender, reward);
+            }
             emit RewardPaid(address(pool.rewardToken), msg.sender, reward);
         }
     }

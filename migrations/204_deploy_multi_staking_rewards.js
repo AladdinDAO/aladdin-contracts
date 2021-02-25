@@ -1,6 +1,7 @@
 // ============ Contracts ============
 
 const ALDToken = artifacts.require('ALDToken')
+const WrappedERC20 = artifacts.require('WrappedERC20')
 const RewardDistributor = artifacts.require('RewardDistributor')
 const MultiStakingRewards = artifacts.require('MultiStakingRewards')
 
@@ -18,11 +19,13 @@ module.exports = migration;
 
 async function deployMultiStakingRewards(deployer, network) {
   const aldToken = await ALDToken.deployed();
+  const wALDToken = await WrappedERC20.deployed();
   const rewardDistributor = await RewardDistributor.deployed();
 
   await deployer.deploy(
     MultiStakingRewards,
     aldToken.address,
+    wALDToken.address,
     rewardDistributor.address
   )
 }
