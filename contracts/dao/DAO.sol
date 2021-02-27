@@ -56,10 +56,15 @@ contract DAO is ERC20 {
         _;
     }
 
+    modifier onlyWhitelist() {
+        require(isWhitelisted[msg.sender] == true);
+        _;
+    }
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     // fund the dao and get shares
-    function fund(uint _shares) external {
+    function fund(uint _shares) external onlyWhitelist {
         require(balanceOf(msg.sender).add(_shares) <= shareCap, "!over cap");
 
         uint w = _shares.mul(rate);
