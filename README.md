@@ -39,3 +39,5 @@ Contracts for funding and treasury
   - USDC: `0xb7a4F3E9097C08dA09517b5aB877F7a917224ede`
   - USDT: `0x07de306FF27a2B630B1141956844eB1552B956B5`
   - COMP: `0x61460874a7196d6a22D1eE4922473664b3E95270`
+### Run testcase
+- npm run test
