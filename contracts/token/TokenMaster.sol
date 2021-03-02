@@ -47,6 +47,9 @@ contract TokenMaster is Ownable {
     ALDToken public ALD;
     // token distributor address.
     address public tokenDistributor;
+    // token distributor reward allocation = reward amount * tokenDistributorAllocMin / tokenDistributorAllocMax
+    uint256 public tokenDistributorAllocMin = 1000;
+    uint256 constant public tokenDistributorAllocMax = 10000;
 
     // The block number when ALD mining starts.
     uint256 public startBlock;
@@ -202,7 +205,7 @@ contract TokenMaster is Ownable {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 ALDReward = multiplier.mul(ALDPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        ALD.mint(tokenDistributor, ALDReward.div(10));
+        ALD.mint(tokenDistributor, ALDReward.mul(tokenDistributorAllocMin).div(tokenDistributorAllocMax));
         ALD.mint(address(this), ALDReward);
         pool.accALDPerShare = pool.accALDPerShare.add(ALDReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
@@ -221,11 +224,6 @@ contract TokenMaster is Ownable {
     }
 
     /* ========== RESTRICTED FUNCTONS ========== */
-
-    // Update token distributor address.
-    function setTokenDistributor(address _tokenDistributor) public onlyOwner {
-        tokenDistributor = _tokenDistributor;
-    }
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
@@ -250,6 +248,16 @@ contract TokenMaster is Ownable {
         }
         totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(_allocPoint);
         poolInfo[_pid].allocPoint = _allocPoint;
+    }
+
+    // Update token distributor address.
+    function setTokenDistributor(address _tokenDistributor) public onlyOwner {
+        tokenDistributor = _tokenDistributor;
+    }
+
+    // Update token distributor allocation.
+    function setTokenDistributorAllocMin(uint256 _tokenDistributorAllocMin) public onlyOwner {
+        tokenDistributorAllocMin = _tokenDistributorAllocMin;
     }
 
     // Update Rewards Per Block
