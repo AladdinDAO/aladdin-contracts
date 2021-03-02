@@ -54,7 +54,7 @@ contract TokenMaster is Ownable {
     // Bonus muliplier for early ALD makers.
     uint256[] public REWARD_MULTIPLIER = [1000, 100, 10, 1, 0];
     // Reward muliplier duration
-    uint256 public BLOCKS_PER_MULTIPLIER = 5760; // 1 day
+    uint256 public BLOCKS_PER_MULTIPLIER = 86400; // 5 days for 5s block time
     // Array of block numbers where reward multiplier changes.
     uint256[] public CHANGE_MULTIPLIER_AT_BLOCK; // init in constructor
 
