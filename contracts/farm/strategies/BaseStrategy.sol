@@ -7,12 +7,6 @@ import "../../common/SafeERC20.sol";
 
 interface IController {
     function vaults(address) external view returns (address);
-    function strategies(address) external view returns (address);
-    function rewards() external view returns (address);
-    function approveStrategy(address, address) external;
-    function setStrategy(address, address) external;
-    function approvedStrategies(address, address) external view returns (bool);
-    function withdrawAll(address) external;
 }
 
 /*

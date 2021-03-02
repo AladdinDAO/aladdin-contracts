@@ -6,8 +6,9 @@ import "../common/SafeMath.sol";
 import "../common/Ownable.sol";
 import "./ALDToken.sol";
 
-// Forked from the original SushiMaster contract with the following changes:
+// Forked from the original SushiMaster contract (https://github.com/sushiswap/sushiswap/blob/master/contracts/SushiMaker.sol) with the following changes:
 // - Add mechanism allow changing reward multpliers on a scheduled timeline
+// - Style changes 
 
 contract TokenMaster is Ownable {
     using SafeMath for uint256;

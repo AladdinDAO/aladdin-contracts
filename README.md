@@ -1,20 +1,31 @@
 # AladdinDAO
+A community driven yield farming DAO.
+
+## Build
+
+1. `npm install`
+2. `npx truffle compile`
+
+## Test
+`npm run test`
 
 ## Contract Overview
 
 ![Overview](/diagram.png)
 
+Contracts are broken down and categorized into directories, each representing module of the system.
+
 ### Token
-Contracts for the ALD token and its distribution.
+Contracts for ALD token and distribution logic using a modified version of SushiMaster.
 
 ### Farm
-Contracts for yearn style strategies. Strategies does not auto sell rewards for underlying, but allow users to claim them instead
+Contracts for yearn style yield farming system.
 
 ### Reward
-Staking reward contracts for ALD token.
+Standard Synthetix style staking reward contracts with modification for allowing multiple reward tokens.
 
 ### DAO
-Contracts for funding and treasury
+Contracts for DAO and treasury
 
 ## Deployments
 
@@ -39,5 +50,3 @@ Contracts for funding and treasury
   - USDC: `0xb7a4F3E9097C08dA09517b5aB877F7a917224ede`
   - USDT: `0x07de306FF27a2B630B1141956844eB1552B956B5`
   - COMP: `0x61460874a7196d6a22D1eE4922473664b3E95270`
-### Run testcase
-- npm run test

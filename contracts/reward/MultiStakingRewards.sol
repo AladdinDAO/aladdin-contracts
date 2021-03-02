@@ -5,16 +5,16 @@ import "../common/Math.sol";
 import "../common/SafeMath.sol";
 import "../common/SafeERC20.sol";
 import "../common/ReentrancyGuard.sol";
+import "../interfaces/IRewardsDistributionRecipient.sol";
+import "../interfaces/IWrappedERC20.sol";
 
-interface IWrappedERC20 {
-    function unwrap(address _to, uint _amount) external;
-}
-
-// A multistakingreward contract that allows stakers to recieve various reward tokens.
-// Forked from the original Synthetix staking contract with following changes:
+// A multistakingreward contract that allows stakers to staking a single token and recieve various reward tokens.
+// Forked from the Uniswap staking reward contract at https://etherscan.io/address/0x7FBa4B8Dc5E7616e59622806932DBea72537A56b#code
+// with the following changes:
 // - Expand from single reward token to a list of reward tokens
+// - allow governance to rescue unclaimed tokens
 
-contract MultiStakingRewards is ReentrancyGuard {
+contract MultiStakingRewards is IRewardsDistributionRecipient, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -177,7 +177,7 @@ contract MultiStakingRewards is ReentrancyGuard {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function notifyRewardAmount(address _rewardToken, uint256 _amount) external onlyRewardsDistribution updateReward(_rewardToken, address(0)) {
+    function notifyRewardAmount(address _rewardToken, uint256 _amount) external override onlyRewardsDistribution updateReward(_rewardToken, address(0)) {
         RewardPool storage pool = rewardPools[_rewardToken];
 
         if (block.timestamp >= pool.periodFinish) {

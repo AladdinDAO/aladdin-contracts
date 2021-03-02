@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
 
-// TokenDistributor allows Fund Managers to distribute tokens
+// A simple token distributor that takes any ERC20 token, and allows Fund Manager roles to transfer token to recipients.
 contract TokenDistributor {
     using SafeERC20 for IERC20;
 

@@ -5,21 +5,10 @@ import "../common/SafeMath.sol";
 import "../common/Address.sol";
 import "../common/SafeERC20.sol";
 
-interface Strategy {
-    function want() external view returns (address);
-    function deposit() external;
-    function withdraw(address) external;
-    function withdraw(uint) external;
-    function withdrawAll() external returns (uint);
-    function harvest() external;
-    function balanceOf() external view returns (uint);
-}
+import "../interfaces/IController.sol";
+import "../interfaces/IStrategy.sol";
 
-interface Converter {
-    function convert(address) external returns (uint);
-}
-
-interface OneSplitAudit {
+interface IOneSplitAudit {
     function swap(
         address fromToken,
         address destToken,
@@ -47,10 +36,10 @@ interface OneSplitAudit {
         );
 }
 
-// Forked from the original yearn Controller with the following changes:
+// Forked from the original yearn Controller (https://github.com/yearn/yearn-protocol/blob/develop/contracts/controllers/Controller.sol) with the following changes:
 // - change mapping of vault and strategy from token -> vault, token -> strategy to vault <-> strategy
 
-contract Controller {
+contract Controller is IController {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -61,12 +50,10 @@ contract Controller {
     address public rewards;
     address public onesplit;
 
-    // Vault to strategy mapping
-    mapping(address => address) public vaults;
     // Strategy to vault mapping
+    mapping(address => address) public vaults;
+    // Vault to strategy mapping
     mapping(address => address) public strategies;
-
-    mapping(address => mapping(address => address)) public converters;
 
     uint public split = 500;
     uint public constant max = 10000;
@@ -81,51 +68,51 @@ contract Controller {
 
     /* ========== VIEW FUNCTIONS ========== */
 
-    function balanceOf(address _vault) external view returns (uint) {
-        return Strategy(strategies[_vault]).balanceOf();
+    function balanceOf(address _vault) external override view returns (uint) {
+        return IStrategy(strategies[_vault]).balanceOf();
     }
 
     function getExpectedReturn(address _strategy, address _token, uint parts) public view returns (uint expected) {
         uint _balance = IERC20(_token).balanceOf(_strategy);
-        address _want = Strategy(_strategy).want();
-        (expected,) = OneSplitAudit(onesplit).getExpectedReturn(_token, _want, _balance, parts, 0);
+        address _want = IStrategy(_strategy).want();
+        (expected,) = IOneSplitAudit(onesplit).getExpectedReturn(_token, _want, _balance, parts, 0);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function farm(address _vault, uint _amount) public {
+    function farm(address _vault, uint _amount) public override {
         address _strategy = strategies[_vault];
-        address _want = Strategy(_strategy).want();
+        address _want = IStrategy(_strategy).want();
         IERC20(_want).safeTransfer(_strategy, _amount);
-        Strategy(_strategy).deposit();
+        IStrategy(_strategy).deposit();
     }
 
-    function harvest(address _vault) public {
+    function harvest(address _vault) public override {
         require(msg.sender == _vault, "!vault");
-        Strategy(strategies[_vault]).harvest();
+        IStrategy(strategies[_vault]).harvest();
     }
 
-    function withdraw(address _vault, uint _amount) public {
+    function withdraw(address _vault, uint _amount) public override {
         require(msg.sender == _vault, "!vault");
-        Strategy(strategies[_vault]).withdraw(_amount);
+        IStrategy(strategies[_vault]).withdraw(_amount);
     }
 
     // Only allows to withdraw non-core strategy tokens ~ this is over and above normal yield
     function harvestAndReinvest(address _strategy, address _token, uint parts) public {
         // This contract should never have value in it, but just incase since this is a public call
         uint _before = IERC20(_token).balanceOf(address(this));
-        Strategy(_strategy).withdraw(_token);
+        IStrategy(_strategy).withdraw(_token);
         uint _after =  IERC20(_token).balanceOf(address(this));
         if (_after > _before) {
             uint _amount = _after.sub(_before);
-            address _want = Strategy(_strategy).want();
+            address _want = IStrategy(_strategy).want();
             uint[] memory _distribution;
             uint _expected;
             _before = IERC20(_want).balanceOf(address(this));
             IERC20(_token).safeApprove(onesplit, 0);
             IERC20(_token).safeApprove(onesplit, _amount);
-            (_expected, _distribution) = OneSplitAudit(onesplit).getExpectedReturn(_token, _want, _amount, parts, 0);
-            OneSplitAudit(onesplit).swap(_token, _want, _amount, _expected, _distribution, 0);
+            (_expected, _distribution) = IOneSplitAudit(onesplit).getExpectedReturn(_token, _want, _amount, parts, 0);
+            IOneSplitAudit(onesplit).swap(_token, _want, _amount, _expected, _distribution, 0);
             _after = IERC20(_want).balanceOf(address(this));
             if (_after > _before) {
                 _amount = _after.sub(_before);
@@ -158,17 +145,12 @@ contract Controller {
         governance = _governance;
     }
 
-    function setConverter(address _input, address _output, address _converter) public {
-        require(msg.sender == governance, "!governance");
-        converters[_input][_output] = _converter;
-    }
-
     function setStrategy(address _vault, address _strategy) public {
         require(msg.sender == governance, "!governance");
 
         address _current = strategies[_vault];
         if (_current != address(0)) {
-           Strategy(_current).withdrawAll();
+           IStrategy(_current).withdrawAll();
         }
         strategies[_vault] = _strategy;
         vaults[_strategy] = _vault;
@@ -177,7 +159,7 @@ contract Controller {
     function withdrawAll(address _strategy) public {
         require(msg.sender == governance, "!governance");
         // WithdrawAll sends 'want' to 'vault'
-        Strategy(_strategy).withdrawAll();
+        IStrategy(_strategy).withdrawAll();
     }
 
     function inCaseTokensGetStuck(address _token, uint _amount) public {
@@ -187,7 +169,7 @@ contract Controller {
 
     function inCaseStrategyTokenGetStuck(address _strategy, address _token) public {
         require(msg.sender == governance, "!governance");
-        Strategy(_strategy).withdraw(_token);
+        IStrategy(_strategy).withdraw(_token);
         IERC20(_token).safeTransfer(governance, IERC20(_token).balanceOf(address(this)));
     }
 }

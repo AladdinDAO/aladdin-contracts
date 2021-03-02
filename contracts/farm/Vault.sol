@@ -6,14 +6,9 @@ import "../common/SafeERC20.sol";
 import "../common/SafeMath.sol";
 import "../common/Address.sol";
 
-interface IController {
-    function withdraw(address, uint) external;
-    function balanceOf(address) external view returns (uint);
-    function farm(address, uint) external;
-    function harvest(address) external;
-}
+import "../interfaces/IController.sol";
 
-// Forked from the original yearn Vault with the following changes:
+// Forked from the original yearn yVault (https://github.com/yearn/yearn-protocol/blob/develop/contracts/vaults/yVault.sol) with the following changes:
 // - Introduce reward token of which the user can claim from the underlying strategy
 // - Keeper fees for farm and harvest
 // - Overriding transfer function to avoid reward token accumulation in TokenMaster (e.g when user stake Vault token into TokenMaster)

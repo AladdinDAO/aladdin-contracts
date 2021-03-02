@@ -2,12 +2,9 @@ pragma solidity 0.6.12;
 
 import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
+import "../interfaces/IRewardsDistributionRecipient.sol";
 
-interface IRewardsDistributionRecipient {
-    function notifyRewardAmount(address _rewardToken, uint256 reward) external;
-}
-
-// RewardDistributor allows Fund Managers to send rewards
+// A simple reward distributor that takes any ERC20 token, and allows Fund Manager roles to send/notify reward to IRewardsDistributionRecipient.
 contract RewardDistributor {
     using SafeERC20 for IERC20;
 
