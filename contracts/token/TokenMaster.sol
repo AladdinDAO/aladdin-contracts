@@ -6,9 +6,9 @@ import "../common/SafeMath.sol";
 import "../common/Ownable.sol";
 import "./ALDToken.sol";
 
-// Forked from the original SushiMaster contract (https://github.com/sushiswap/sushiswap/blob/master/contracts/SushiMaker.sol) with the following changes:
+// Forked from the original Sushiswap's ChefMaster contract (https://github.com/sushiswap/sushiswap/blob/master/contracts/MasterChef.sol) with the following changes:
 // - Add mechanism allow changing reward multpliers on a scheduled timeline
-// - Style changes 
+// - Style changes
 
 contract TokenMaster is Ownable {
     using SafeMath for uint256;
@@ -51,7 +51,7 @@ contract TokenMaster is Ownable {
     // The block number when ALD mining starts.
     uint256 public startBlock;
     // ALD tokens created per block.
-    uint256 public ALDPerBlock = 10;
+    uint256 public ALDPerBlock = 10**18;
     // Bonus muliplier for early ALD makers.
     uint256[] public REWARD_MULTIPLIER = [1000, 100, 10, 1, 0];
     // Reward muliplier duration
@@ -252,9 +252,14 @@ contract TokenMaster is Ownable {
         poolInfo[_pid].allocPoint = _allocPoint;
     }
 
-    // Update Rewards Mulitplier Array
-    function setRewardMul(uint256[] memory _newMulReward) public onlyOwner {
+    // Update Rewards Per Block
+    function setALDPerBlock(uint256[] memory _newMulReward) public onlyOwner {
         REWARD_MULTIPLIER = _newMulReward;
+    }
+
+    // Update Rewards Mulitplier Array
+    function setRewardMul(uint256 _ALDPerBlock) public onlyOwner {
+        ALDPerBlock = _ALDPerBlock;
     }
 
     // Update Halving At Block
