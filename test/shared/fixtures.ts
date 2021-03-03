@@ -3,7 +3,7 @@ import { Web3Provider } from 'ethers/providers'
 import { deployContract } from 'ethereum-waffle'
 import { expandTo18Decimals } from './utilities'
 
-import ERC20 from '../../build/contracts/ERC20.json'
+import ERC20Mock from '../../build/contracts/ERC20Mock.json'
 import ALDToken from '../../build/contracts/ALDToken.json'
 import DAO from '../../build/contracts/DAO.json'
 import Treasury from '../../build/contracts/Treasury.json'
@@ -43,11 +43,11 @@ interface Fixture {
 export async function getFixture(provider: Web3Provider, [wallet]: Wallet[]): Promise<Fixture> {
     // deploy tokens
     console.log(`using wallet `, wallet.address)
-    const usdt = await deployContract(wallet, ERC20, ["usdt", "USDT"])
-    const comp = await deployContract(wallet, ERC20, ["compound", "COMP"])
+    const usdt = await deployContract(wallet, ERC20Mock, ["usdt", "USDT"])
+    const comp = await deployContract(wallet, ERC20Mock, ["compound", "COMP"])
     const ald = await deployContract(wallet, ALDToken)
     const treasury = await deployContract(wallet, Treasury)
-    const dao = await deployContract(wallet, DAO, [usdt.address, "10", "2", [wallet.address]])
+    const dao = await deployContract(wallet, DAO, [usdt.address, expandTo18Decimals(1), expandTo18Decimals(20000), [wallet.address]])
     const tokenDistributor = await deployContract(wallet, TokenDistributor,  [[wallet.address]])
     const rewardDistributor = await deployContract(wallet, RewardDistributor,  [[wallet.address]])
     const controller = await deployContract(wallet, Controller)

@@ -42,7 +42,7 @@ contract DAO is ERC20 {
         shareCap = _shareCap;
         whitelist = _whitelist;
 
-        for (uint i=0; i<_whitelist.length - 1; i++) {
+        for (uint i=0; i<_whitelist.length; i++) {
             isWhitelisted[_whitelist[i]] = true;
         }
 
@@ -57,7 +57,7 @@ contract DAO is ERC20 {
     }
 
     modifier onlyWhitelist() {
-        require(isWhitelisted[msg.sender] == true);
+        require(isWhitelisted[msg.sender] == true, "not whitelist");
         _;
     }
 
