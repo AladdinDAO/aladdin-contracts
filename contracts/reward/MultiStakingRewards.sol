@@ -141,7 +141,17 @@ contract MultiStakingRewards is IRewardsDistributionRecipient, ReentrancyGuard {
         emit Withdrawn(msg.sender, amount);
     }
 
-    function getRewards(address _rewardToken) public nonReentrant updateReward(_rewardToken, msg.sender) {
+    function getReward(address _rewardToken) public nonReentrant updateReward(_rewardToken, msg.sender) {
+        _getReward(_rewardToken);
+    }
+
+    function getAllActiveRewards() public nonReentrant updateActiveRewards(msg.sender) {
+        for (uint i = 0; i < activeRewardPools.length; i++) {
+            _getReward(activeRewardPools[i]);
+        }
+    }
+
+    function _getReward(address _rewardToken) internal {
         RewardPool storage pool = rewardPools[_rewardToken];
         require(pool.isActive, "pool is inactive");
 
@@ -155,18 +165,6 @@ contract MultiStakingRewards is IRewardsDistributionRecipient, ReentrancyGuard {
                 pool.rewardToken.safeTransfer(msg.sender, reward);
             }
             emit RewardPaid(address(pool.rewardToken), msg.sender, reward);
-        }
-    }
-
-    function getAllActiveRewards() public nonReentrant updateActiveRewards(msg.sender) {
-        for (uint i = 0; i < activeRewardPools.length; i++) {
-            RewardPool storage pool = rewardPools[activeRewardPools[i]];
-            uint256 reward = pool.rewards[msg.sender];
-            if (reward > 0) {
-                pool.rewards[msg.sender] = 0;
-                pool.rewardToken.safeTransfer(msg.sender, reward);
-                emit RewardPaid(address(pool.rewardToken), msg.sender, reward);
-            }
         }
     }
 

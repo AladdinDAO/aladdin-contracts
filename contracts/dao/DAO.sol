@@ -52,12 +52,12 @@ contract DAO is ERC20 {
     /* ========== MODIFIER ========== */
 
     modifier onlyGov() {
-        require(msg.sender == governance);
+        require(msg.sender == governance, "!gov");
         _;
     }
 
     modifier onlyWhitelist() {
-        require(isWhitelisted[msg.sender] == true, "not whitelist");
+        require(isWhitelisted[msg.sender] == true, "!whitelist");
         _;
     }
 
