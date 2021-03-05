@@ -93,6 +93,7 @@ contract Vault is ERC20 {
         shares = (_amount.mul(totalSupply())).div(_pool);
       }
       _mint(msg.sender, shares);
+      emit Deposit(msg.sender, _amount);
   }
 
   // No rebalance implementation for lower fees and faster swaps
@@ -115,6 +116,7 @@ contract Vault is ERC20 {
       }
 
       token.safeTransfer(msg.sender, r);
+      emit Withdraw(msg.sender, r);
   }
 
   function claim() public {
@@ -125,6 +127,7 @@ contract Vault is ERC20 {
           rewards[msg.sender] = 0;
           rewardToken.safeTransfer(msg.sender, reward);
       }
+      emit Claim(msg.sender, reward);
   }
 
   function exit() external {
@@ -155,6 +158,8 @@ contract Vault is ERC20 {
       uint amountLessFee = _bal.sub(keeperFee);
       token.safeTransfer(controller, amountLessFee);
       IController(controller).farm(address(this), amountLessFee);
+
+      emit Farm(msg.sender, keeperFee, amountLessFee);
   }
 
   // Keepers call harvest() to claim rewards from strategy
@@ -169,7 +174,9 @@ contract Vault is ERC20 {
 
       uint newRewardAmount = harvested.sub(keeperFee);
       // distribute new rewards to current shares evenly
-      rewardsPerShareStored = rewardsPerShareStored.add(newRewardAmount.div(totalSupply()));
+      rewardsPerShareStored = rewardsPerShareStored.add(newRewardAmount.mul(1e18).div(totalSupply()));
+
+      emit Harvest(msg.sender, keeperFee, newRewardAmount);
   }
 
   /* ========== INTERNAL FUNCTIONS ========== */
@@ -210,4 +217,12 @@ contract Vault is ERC20 {
       require(msg.sender == governance, "!governance");
       tokenMaster = _tokenMaster;
   }
+
+  /* ========== EVENTS ========== */
+
+  event Deposit(address indexed user, uint256 amount);
+  event Withdraw(address indexed user, uint256 amount);
+  event Claim(address indexed user, uint256 amount);
+  event Farm(address indexed keeper, uint256 keeperFee, uint256 farmedAmount);
+  event Harvest(address indexed keeper, uint256 keeperFee, uint256 harvestedAmount);
 }

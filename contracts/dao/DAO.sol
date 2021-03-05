@@ -23,6 +23,8 @@ contract DAO is ERC20 {
     mapping(address => bool) public isWhitelisted;
     address[] public whitelist;
 
+    mapping(address => uint) public shares; // Tracking of shares of funders to avoid going over sharesCap
+
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
@@ -65,12 +67,13 @@ contract DAO is ERC20 {
 
     // fund the dao and get shares
     function fund(uint _shares) external onlyWhitelist {
-        require(balanceOf(msg.sender).add(_shares) <= shareCap, "!over cap");
+        require(shares[msg.sender].add(_shares) <= shareCap, "!over cap");
 
         uint w = _shares.mul(rate);
         want.safeTransferFrom(msg.sender, address(this), w);
 
         _mint(msg.sender, _shares);
+        shares[msg.sender] = shares[msg.sender].add(_shares);
     }
 
     /* ========== VIEW FUNCTIONS ========== */

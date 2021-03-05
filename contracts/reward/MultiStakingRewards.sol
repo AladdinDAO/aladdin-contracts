@@ -254,11 +254,9 @@ contract MultiStakingRewards is IRewardsDistributionRecipient, ReentrancyGuard {
 
     // Allow governance to rescue unclaimed inactive rewards
     function rescue(address _rewardToken) public onlyGov {
+        require(_rewardToken != address(stakingToken), "Cannot withdraw staking token");
         RewardPool storage pool = rewardPools[_rewardToken];
-        if (pool.isActive) {
-            // cannot withdraw active rewards
-            return;
-        }
+        require(pool.isActive == false, "Cannot withdraw active reward token");
 
         uint _balance = IERC20(_rewardToken).balanceOf(address(this));
         IERC20(_rewardToken).safeTransfer(governance, _balance);
