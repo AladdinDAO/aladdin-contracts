@@ -72,7 +72,7 @@ contract RewardDistributor {
             IERC20 rewardToken = _rewardTokens[i];
             IRewardsDistributionRecipient recipient = _recipients[i];
             // Send the RewardToken to recipient
-            rewardToken.safeTransferFrom(msg.sender, address(recipient), amount);
+            rewardToken.safeTransfer(address(recipient), amount);
             // Only after successfull tx - notify the contract of the new funds
             recipient.notifyRewardAmount(address(rewardToken), amount);
 

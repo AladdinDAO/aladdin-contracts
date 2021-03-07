@@ -71,7 +71,7 @@ contract TokenDistributor {
             IERC20 rewardToken = _tokens[i];
             address recipient = _recipients[i];
             // Send the RewardToken to recipient
-            rewardToken.safeTransferFrom(msg.sender, recipient, amount);
+            rewardToken.safeTransfer(recipient, amount);
 
             emit DistributedToken(msg.sender, recipient, address(rewardToken), amount);
         }
