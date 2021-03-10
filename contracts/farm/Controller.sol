@@ -19,7 +19,6 @@ contract Controller is IController {
     /* ========== STATE VARIABLES ========== */
 
     address public governance;
-    address public rewards;
 
     // Strategy to vault mapping
     mapping(address => address) public vaults;
@@ -33,7 +32,6 @@ contract Controller is IController {
 
     constructor() public {
         governance = msg.sender;
-        rewards = msg.sender;
     }
 
     /* ========== VIEW FUNCTIONS ========== */
@@ -62,11 +60,6 @@ contract Controller is IController {
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
-
-    function setRewards(address _rewards) public {
-        require(msg.sender == governance, "!governance");
-        rewards = _rewards;
-    }
 
     function setSplit(uint _split) public {
         require(msg.sender == governance, "!governance");
