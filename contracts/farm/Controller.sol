@@ -8,34 +8,6 @@ import "../common/SafeERC20.sol";
 import "../interfaces/IController.sol";
 import "../interfaces/IStrategy.sol";
 
-interface IOneSplitAudit {
-    function swap(
-        address fromToken,
-        address destToken,
-        uint256 amount,
-        uint256 minReturn,
-        uint256[] calldata distribution,
-        uint256 flags
-    )
-        external
-        payable
-        returns(uint256 returnAmount);
-
-    function getExpectedReturn(
-        address fromToken,
-        address destToken,
-        uint256 amount,
-        uint256 parts,
-        uint256 flags // See constants in IOneSplit.sol
-    )
-        external
-        view
-        returns(
-            uint256 returnAmount,
-            uint256[] memory distribution
-        );
-}
-
 // Forked from the original yearn Controller (https://github.com/yearn/yearn-protocol/blob/develop/contracts/controllers/Controller.sol) with the following changes:
 // - change mapping of vault and strategy from token -> vault, token -> strategy to vault <-> strategy
 
@@ -48,7 +20,6 @@ contract Controller is IController {
 
     address public governance;
     address public rewards;
-    address public onesplit;
 
     // Strategy to vault mapping
     mapping(address => address) public vaults;
@@ -63,19 +34,12 @@ contract Controller is IController {
     constructor() public {
         governance = msg.sender;
         rewards = msg.sender;
-        onesplit = address(0x50FDA034C0Ce7a8f7EFDAebDA7Aa7cA21CC1267e);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
 
     function balanceOf(address _vault) external override view returns (uint) {
         return IStrategy(strategies[_vault]).balanceOf();
-    }
-
-    function getExpectedReturn(address _strategy, address _token, uint parts) public view returns (uint expected) {
-        uint _balance = IERC20(_token).balanceOf(_strategy);
-        address _want = IStrategy(_strategy).want();
-        (expected,) = IOneSplitAudit(onesplit).getExpectedReturn(_token, _want, _balance, parts, 0);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -97,32 +61,6 @@ contract Controller is IController {
         IStrategy(strategies[_vault]).withdraw(_amount);
     }
 
-    // Only allows to withdraw non-core strategy tokens ~ this is over and above normal yield
-    function harvestAndReinvest(address _strategy, address _token, uint parts) public {
-        // This contract should never have value in it, but just incase since this is a public call
-        uint _before = IERC20(_token).balanceOf(address(this));
-        IStrategy(_strategy).withdraw(_token);
-        uint _after =  IERC20(_token).balanceOf(address(this));
-        if (_after > _before) {
-            uint _amount = _after.sub(_before);
-            address _want = IStrategy(_strategy).want();
-            uint[] memory _distribution;
-            uint _expected;
-            _before = IERC20(_want).balanceOf(address(this));
-            IERC20(_token).safeApprove(onesplit, 0);
-            IERC20(_token).safeApprove(onesplit, _amount);
-            (_expected, _distribution) = IOneSplitAudit(onesplit).getExpectedReturn(_token, _want, _amount, parts, 0);
-            IOneSplitAudit(onesplit).swap(_token, _want, _amount, _expected, _distribution, 0);
-            _after = IERC20(_want).balanceOf(address(this));
-            if (_after > _before) {
-                _amount = _after.sub(_before);
-                uint _reward = _amount.mul(split).div(max);
-                farm(_want, _amount.sub(_reward));
-                IERC20(_want).safeTransfer(rewards, _reward);
-            }
-        }
-    }
-
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     function setRewards(address _rewards) public {
@@ -133,11 +71,6 @@ contract Controller is IController {
     function setSplit(uint _split) public {
         require(msg.sender == governance, "!governance");
         split = _split;
-    }
-
-    function setOneSplit(address _onesplit) public {
-        require(msg.sender == governance, "!governance");
-        onesplit = _onesplit;
     }
 
     function setGovernance(address _governance) public {
