@@ -43,22 +43,39 @@ contract TokenMaster is Ownable {
 
     /* ========== STATE VARIABLES ========== */
 
+    /***
+    *  ALD token release schedule
+    *
+    *  Initial 4 weeks:
+    *  - 500 ALD per block
+    *
+    *  Following 4 years:
+    *  - starting with 91.2 ALD per block during the first year
+    *  - 80% reduction every year
+    *
+    *  Miner vs Distributor Allocation:
+    *  - Miner 40%
+    *  - Token Distributor 60%
+    */
+
     // The ALD TOKEN!
     ALDToken public ALD;
     // token distributor address.
     address public tokenDistributor;
     // token distributor reward allocation = reward amount * tokenDistributorAllocMin / tokenDistributorAllocMax
-    uint256 public tokenDistributorAllocMin = 1000;
+    uint256 public tokenDistributorAllocMin = 6000;
     uint256 constant public tokenDistributorAllocMax = 10000;
 
     // The block number when ALD mining starts.
     uint256 public startBlock;
     // ALD tokens created per block.
-    uint256 public ALDPerBlock = 10**18;
-    // Bonus muliplier for early ALD makers.
-    uint256[] public REWARD_MULTIPLIER = [1000, 100, 10, 1, 0];
+    uint256 public ALDPerBlock = 1**14; // 0.0001 ALDs
+    // Reward muliplier for token release schedule
+    uint256[] public REWARD_MULTIPLIER = [5000000, 912000, 729600, 583690, 466944, 0]; // 500, 91.2, 72.96, 58.369, 46.6944
+    // Initial bonus blocks
+    uint256 public INITIAL_BONUS_BLOCKS = 200000; // 4 weeks
     // Reward muliplier duration
-    uint256 public BLOCKS_PER_MULTIPLIER = 86400; // 5 days for 5s block time
+    uint256 public BLOCKS_PER_MULTIPLIER = 2600000; // 1 year
     // Array of block numbers where reward multiplier changes.
     uint256[] public CHANGE_MULTIPLIER_AT_BLOCK; // init in constructor
 
@@ -85,8 +102,10 @@ contract TokenMaster is Ownable {
         tokenDistributor = _tokenDistributor;
         startBlock = block.number;
 
-        for (uint256 i = 0; i < REWARD_MULTIPLIER.length - 1; i++) {
-            uint256 changeMultiplierAtBlock = startBlock.add(BLOCKS_PER_MULTIPLIER.mul(i+1));
+        uint256 bonusEndBlock = startBlock.add(INITIAL_BONUS_BLOCKS);
+        CHANGE_MULTIPLIER_AT_BLOCK.push(bonusEndBlock);
+        for (uint256 i = 1; i < REWARD_MULTIPLIER.length - 1; i++) {
+            uint256 changeMultiplierAtBlock = bonusEndBlock.add(BLOCKS_PER_MULTIPLIER.mul(i+1));
             CHANGE_MULTIPLIER_AT_BLOCK.push(changeMultiplierAtBlock);
         }
         CHANGE_MULTIPLIER_AT_BLOCK.push(uint256(-1));
