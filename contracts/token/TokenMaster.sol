@@ -203,11 +203,19 @@ contract TokenMaster is Ownable {
             pool.lastRewardBlock = block.number;
             return;
         }
+
+        // Get total block rewards
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 ALDReward = multiplier.mul(ALDPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        ALD.mint(tokenDistributor, ALDReward.mul(tokenDistributorAllocMin).div(tokenDistributorAllocMax));
-        ALD.mint(address(this), ALDReward);
-        pool.accALDPerShare = pool.accALDPerShare.add(ALDReward.mul(1e12).div(lpSupply));
+        uint256 blockRewards = multiplier.mul(ALDPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+
+        // Update distributor rewards
+        uint256 distributorRewards = blockRewards.mul(tokenDistributorAllocMin).div(tokenDistributorAllocMax);
+        ALD.mint(tokenDistributor, distributorRewards);
+
+        // Update pool rewards
+        uint256 poolRewards = blockRewards.sub(distributorRewards);
+        ALD.mint(address(this), poolRewards);
+        pool.accALDPerShare = pool.accALDPerShare.add(poolRewards.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }
 
