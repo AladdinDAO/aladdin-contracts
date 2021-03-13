@@ -18,10 +18,10 @@ contract StrategyUSDTCompound is BaseStrategy {
     using SafeMath for uint256;
 
     /* ========== STATE VARIABLES ========== */
-    address constant public USDT = address(0x07de306FF27a2B630B1141956844eB1552B956B5); // want
-    address constant public COMP = address(0x61460874a7196d6a22D1eE4922473664b3E95270); // reward
-    address constant public cUSDT = address(0x3f0A0EA2f86baE6362CF9799B523BA06647Da018); // compound cUSDT
-    address constant public comptroller = address(0x5eAe89DC1C671724A672ff0630122ee834098657); // compoound Comptroller
+    address constant public USDT = address(0xdAC17F958D2ee523a2206206994597C13D831ec7); // want
+    address constant public COMP = address(0xc00e94Cb662C3520282E6f5717214004A7f26888); // reward
+    address constant public cUSDT = address(0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9); // compound cUSDT
+    address constant public comptroller = address(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B); // compoound Comptroller
 
     /* ========== CONSTRUCTOR ========== */
 

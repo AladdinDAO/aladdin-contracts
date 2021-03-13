@@ -24,15 +24,15 @@ async function setupContracts(deployer, network) {
   const multiStakingRewards = await MultiStakingRewards.deployed()
 
   // add deployer as minter and mint
-  await aldToken.setMinter("0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb", true) // deployer
+  await aldToken.setMinter("0x7B83E732Bf2b1Ed4442D6BfA546C387f1A4919bc", true) // deployer
   const oneMillion = "1000000000000000000000000"
-  await aldToken.mint("0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb", oneMillion) // deployer
+  await aldToken.mint("0x7B83E732Bf2b1Ed4442D6BfA546C387f1A4919bc", oneMillion) // deployer
   console.log('minted ald')
   // add to dao whitelist
   await dao.addToWhitelist("0x561ADa4B0243F1d83dF80D1653E9F76E84128b0b") // gao
   console.log('added addresses to dao whitelist')
   // send rewards to multistakingrewards
-  await multiStakingRewards.setRewardsDistribution("0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb") // deployer
+  await multiStakingRewards.setRewardsDistribution("0x7B83E732Bf2b1Ed4442D6BfA546C387f1A4919bc") // deployer
   await multiStakingRewards.addRewardPool(wALD.address, 604800) // 7 days
   console.log('added wALD reward pool to staking rewards')
   await aldToken.approve(wALD.address, oneMillion)
