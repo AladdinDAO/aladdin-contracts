@@ -36,7 +36,7 @@ contract DAO is ERC20 {
         public
         ERC20 (
           string(abi.encodePacked("Aladdin DAO")),
-          string(abi.encodePacked("aDAO"))
+          string(abi.encodePacked("ALDDAO"))
         )
     {
         want = IERC20(_want);
