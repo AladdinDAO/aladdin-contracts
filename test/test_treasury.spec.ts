@@ -4,7 +4,7 @@ import { MaxUint256 } from 'ethers/constants'
 import { BigNumber, bigNumberify, defaultAbiCoder, formatEther } from 'ethers/utils'
 import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
 
-import { expandTo18Decimals } from './shared/utilities'
+import { expandTo18Decimals, mineBlock } from './shared/utilities'
 import { getFixture } from './shared/fixtures'
 
 
@@ -15,13 +15,13 @@ const overrides = {
     gasPrice: 0
 }
 
-describe('unitTest', () => {
+describe('treasury', () => {
     const provider = new MockProvider({
         hardfork: 'istanbul',
         mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
         gasLimit: 9999999
     })
-    const [wallet] = provider.getWallets()
+    const [wallet, other] = provider.getWallets()
     const loadFixture = createFixtureLoader(provider, [wallet])
     let ald: Contract
     let treasury: Contract
@@ -53,22 +53,33 @@ describe('unitTest', () => {
         comp = fixture.comp
     })
 
-    it('initSetup', async () => {
-        let gov = await ald.governance()
-        await ald.setMinter(tokenMaster.address, true)
-        await controller.setStrategy(vault.address, strategyUSDTCompound.address)
-        await tokenMaster.add("100", vault.address, true)
-        // add deployer as minter and mint
-        await ald.setMinter(wallet.address, true) // deployer
-        const oneMillion = "1000000000000000000000000"
-        await ald.mint(wallet.address, oneMillion) // deployer
-        // add to dao whitelist
-        await dao.addToWhitelist("0x561ADa4B0243F1d83dF80D1653E9F76E84128b0b") // gao
-        // send rewards to multistakingrewards
-        await multiStakingRewards.setRewardsDistribution(wallet.address) // deployer
-        await multiStakingRewards.addRewardPool(wrappedAld.address, 604800) // 7 days
-        await ald.approve(wrappedAld.address, oneMillion)
-        await wrappedAld.wrap(multiStakingRewards.address, oneMillion)
-        await multiStakingRewards.notifyRewardAmount(wrappedAld.address, oneMillion)
+    it('test takeOut token', async () => {
+        const tokenAmount = expandTo18Decimals(10000)
+        await usdt.mint(treasury.address, tokenAmount)
+
+        await expect(treasury.connect(other).takeOut(usdt.address, other.address, tokenAmount)).to.be.reverted
+
+        await expect(
+            treasury.takeOut(usdt.address, wallet.address, tokenAmount)
+        )
+        .to.emit(usdt, 'Transfer')
+        .withArgs(treasury.address, wallet.address, tokenAmount)
+    })
+
+
+    it('test takeOut eth', async () => {
+        await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 3600)
+        await wallet.sendTransaction({to: treasury.address, value: 10})
+
+        await expect(treasury.connect(other).takeOutETH(other.address, 10)).to.be.revertedWith('!gov')
+    })
+
+    describe('permission', () => {
+        it('set gov', async () => {
+            await expect(treasury.connect(other).setGov(other.address)).to.be.revertedWith('!gov')
+            await treasury.setGov(other.address)
+            expect(await treasury.governance()).to.eq(other.address)
+        })
+
     })
 })
