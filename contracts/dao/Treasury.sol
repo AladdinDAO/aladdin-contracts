@@ -18,10 +18,14 @@ contract Treasury {
         governance = msg.sender;
     }
 
+     // accepts ether
+    receive() external payable{}
+    fallback() external payable{}
+
     /* ========== MODIFIER ========== */
 
     modifier onlyGov() {
-        require(msg.sender == governance);
+        require(msg.sender == governance, "!gov");
         _;
     }
 
