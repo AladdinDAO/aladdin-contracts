@@ -1,15 +1,15 @@
 // ============ Contracts ============
 
 const Controller = artifacts.require('Controller')
-const StrategyRenWBTC = artifacts.require('StrategyRenWBTC')
-const VaultRenWBTC = artifacts.require('VaultRenWBTC')
+const StrategyCurveRenWBTC = artifacts.require('StrategyCurveRenWBTC')
+const VaultCurveRenWBTC = artifacts.require('VaultCurveRenWBTC')
 const TokenMaster = artifacts.require('TokenMaster')
 
 // ============ Main Migration ============
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    deployStrategyRenWBTC(deployer, network),
+    deployStrategyCurveRenWBTC(deployer, network),
   ]);
 };
 
@@ -17,16 +17,16 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function deployStrategyRenWBTC(deployer, network) {
+async function deployStrategyCurveRenWBTC(deployer, network) {
   const controller = await Controller.deployed();
 
   await deployer.deploy(
-    StrategyRenWBTC,
+    StrategyCurveRenWBTC,
     controller.address
   )
 
-  const vault = await VaultRenWBTC.deployed();
-  const strategy = await StrategyRenWBTC.deployed()
+  const vault = await VaultCurveRenWBTC.deployed();
+  const strategy = await StrategyCurveRenWBTC.deployed()
   const tokenMaster = await TokenMaster.deployed();
 
   await controller.setStrategy(vault.address, strategy.address)

@@ -8,8 +8,8 @@ contract VaultUSDTCompound is BaseVault {
           address _tokenMaster)
         public
         BaseVault(
-          address(0x07de306FF27a2B630B1141956844eB1552B956B5), // USDT
-          address(0x61460874a7196d6a22D1eE4922473664b3E95270), // comp
+          address(0xdAC17F958D2ee523a2206206994597C13D831ec7), // USDT
+          address(0xc00e94Cb662C3520282E6f5717214004A7f26888), // comp
           _controller,
           _tokenMaster
         )
