@@ -2,6 +2,8 @@
 
 const Controller = artifacts.require('Controller')
 const StrategyUSDTCompound = artifacts.require('StrategyUSDTCompound')
+const VaultUSDTCompound = artifacts.require('VaultUSDTCompound')
+const TokenMaster = artifacts.require('TokenMaster')
 
 // ============ Main Migration ============
 
@@ -22,4 +24,11 @@ async function deployStrategyUSDTCompound(deployer, network) {
     StrategyUSDTCompound,
     controller.address
   )
+
+  const vault = await VaultUSDTCompound.deployed();
+  const strategy = await StrategyUSDTCompound.deployed()
+  const tokenMaster = await TokenMaster.deployed();
+
+  await controller.setStrategy(vault.address, strategy.address)
+  await tokenMaster.add("100", vault.address, true)
 }

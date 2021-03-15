@@ -17,9 +17,9 @@ module.exports = migration;
 async function deployDAO(deployer, network) {
   await deployer.deploy(
     DAO,
-    "0x07de306FF27a2B630B1141956844eB1552B956B5", // USDT
+    "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
     "10",
     "2",
-    ["0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb"] // deployer
+    ["0x7B83E732Bf2b1Ed4442D6BfA546C387f1A4919bc"] // deployer
   )
 }

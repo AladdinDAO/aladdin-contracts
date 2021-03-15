@@ -17,6 +17,6 @@ module.exports = migration;
 async function deployRewardDistributor(deployer, network) {
   await deployer.deploy(
     RewardDistributor,
-    ["0x82C718eA55b1FFE73200a985Bf55AaF56C1ABbDb"] // deployer
+    ["0x7B83E732Bf2b1Ed4442D6BfA546C387f1A4919bc"] // deployer
   )
 }

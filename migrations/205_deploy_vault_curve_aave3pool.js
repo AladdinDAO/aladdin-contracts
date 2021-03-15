@@ -2,13 +2,13 @@
 
 const Controller = artifacts.require('Controller')
 const TokenMaster = artifacts.require('TokenMaster')
-const Vault = artifacts.require('Vault')
+const VaultCurveAave3Pool = artifacts.require('VaultCurveAave3Pool')
 
 // ============ Main Migration ============
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    deployVault(deployer, network),
+    deployVaultCurveAave3Pool(deployer, network),
   ]);
 };
 
@@ -16,14 +16,12 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function deployVault(deployer, network) {
+async function deployVaultCurveAave3Pool(deployer, network) {
   const controller = await Controller.deployed();
   const tokenMaster = await TokenMaster.deployed();
 
   await deployer.deploy(
-    Vault,
-    "0x07de306FF27a2B630B1141956844eB1552B956B5", // usdt
-    "0x61460874a7196d6a22D1eE4922473664b3E95270", // comp
+    VaultCurveAave3Pool,
     controller.address,
     tokenMaster.address
   )

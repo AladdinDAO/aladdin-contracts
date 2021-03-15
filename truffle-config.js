@@ -49,5 +49,19 @@ module.exports = {
       timeoutBlocks: 500,
       networkCheckTimeout: 1000000,
     },
+    mainnetFork: {
+      network_id: '1',
+      provider: () => new HDWalletProvider(
+        [process.env.DEPLOYER_PRIVATE_KEY],
+        "http://47.52.222.53:8545",
+        0,
+        1,
+      ),
+      gasPrice: 1000000000, // 1 gwei
+      gas: 6721975,
+      from: process.env.DEPLOYER_ACCOUNT,
+      timeoutBlocks: 500,
+      networkCheckTimeout: 1000000,
+    }
   },
 };
