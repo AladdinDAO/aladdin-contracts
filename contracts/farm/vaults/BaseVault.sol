@@ -1,19 +1,19 @@
 pragma solidity 0.6.12;
 
-import "../common/IERC20.sol";
-import "../common/ERC20.sol";
-import "../common/SafeERC20.sol";
-import "../common/SafeMath.sol";
-import "../common/Address.sol";
+import "../../common/IERC20.sol";
+import "../../common/ERC20.sol";
+import "../../common/SafeERC20.sol";
+import "../../common/SafeMath.sol";
+import "../../common/Address.sol";
 
-import "../interfaces/IController.sol";
+import "../../interfaces/IController.sol";
 
 // Forked from the original yearn yVault (https://github.com/yearn/yearn-protocol/blob/develop/contracts/vaults/yVault.sol) with the following changes:
 // - Introduce reward token of which the user can claim from the underlying strategy
 // - Keeper fees for farm and harvest
 // - Overriding transfer function to avoid reward token accumulation in TokenMaster (e.g when user stake Vault token into TokenMaster)
 
-contract Vault is ERC20 {
+abstract contract BaseVault is ERC20 {
   using SafeERC20 for IERC20;
   using Address for address;
   using SafeMath for uint256;
