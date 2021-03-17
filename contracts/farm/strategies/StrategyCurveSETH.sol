@@ -58,7 +58,7 @@ contract StrategyCurveSETH is BaseStrategy {
         if (_want > 0) {
             IERC20(want).safeApprove(gauge, 0);
             IERC20(want).safeApprove(gauge, _want);
-            Gauge(want).deposit(_want);
+            Gauge(gauge).deposit(_want);
         }
     }
 

@@ -20,7 +20,7 @@ contract StrategyCurveRenWBTC is BaseStrategy {
 
     address constant public crvRenWBTC = address(0x49849C98ae39Fff122806C06791Fa73784FB3675); // want
     address constant public CRV = address(0xD533a949740bb3306d119CC777fa900bA034cd52); // reward
-    address constant public gauge = address(0x3C0FFFF15EA30C35d7A85B85c0782D6c94e1d238);
+    address constant public gauge = address(0xB1F2cdeC61db658F091671F5f199635aEF202CAC);
     address constant public mintr = address(0xd061D61a4d941c39E5453435B6345Dc261C2fcE0);
 
     /* ========== CONSTRUCTOR ========== */
@@ -58,7 +58,7 @@ contract StrategyCurveRenWBTC is BaseStrategy {
         if (_want > 0) {
             IERC20(want).safeApprove(gauge, 0);
             IERC20(want).safeApprove(gauge, _want);
-            Gauge(want).deposit(_want);
+            Gauge(gauge).deposit(_want);
         }
     }
 
