@@ -50,10 +50,10 @@ module.exports = {
       networkCheckTimeout: 1000000,
     },
     mainnetFork: {
-      network_id: '1',
+      network_id: '31337',
       provider: () => new HDWalletProvider(
         [process.env.DEPLOYER_PRIVATE_KEY],
-        "http://47.52.222.53:8545",
+        "http://47.52.160.9:8545",
         0,
         1,
       ),
