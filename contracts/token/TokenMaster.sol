@@ -69,7 +69,7 @@ contract TokenMaster is Ownable {
     // The block number when ALD mining starts.
     uint256 public startBlock;
     // ALD tokens created per block.
-    uint256 public ALDPerBlock = 1**14; // 0.0001 ALDs
+    uint256 public ALDPerBlock = 1 * 10 ** 14; // 0.0001 ALDs
     // Reward muliplier for token release schedule
     uint256[] public REWARD_MULTIPLIER = [5000000, 912000, 729600, 583690, 466944, 0]; // 500, 91.2, 72.96, 58.369, 46.6944
     // Initial bonus blocks
