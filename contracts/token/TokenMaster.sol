@@ -104,7 +104,7 @@ contract TokenMaster is Ownable {
 
         uint256 bonusEndBlock = startBlock.add(INITIAL_BONUS_BLOCKS);
         CHANGE_MULTIPLIER_AT_BLOCK.push(bonusEndBlock);
-        for (uint256 i = 1; i < REWARD_MULTIPLIER.length - 1; i++) {
+        for (uint256 i = 0; i < REWARD_MULTIPLIER.length - 1; i++) {
             uint256 changeMultiplierAtBlock = bonusEndBlock.add(BLOCKS_PER_MULTIPLIER.mul(i+1));
             CHANGE_MULTIPLIER_AT_BLOCK.push(changeMultiplierAtBlock);
         }
