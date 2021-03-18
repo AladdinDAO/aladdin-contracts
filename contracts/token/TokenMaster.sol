@@ -137,6 +137,20 @@ contract TokenMaster is Ownable {
         return result;
     }
 
+    function test_currentALDRewardForPool(uint256 _pid) public {
+        PoolInfo storage pool = poolInfo[_pid];
+        UserInfo storage user = userInfo[_pid][_user];
+        uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
+        return multiplier.mul(ALDPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+    }
+
+    function test_currentaccALDPerShareForPool(uint256 _pid, ) public {
+        PoolInfo storage pool = poolInfo[_pid];
+        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
+        uint256 ALDReward = test_currentALDRewardForPool(pid);
+        return accALDPerShare.add(ALDReward.mul(1e12).div(lpSupply));
+    }
+
     // View function to see pending ALDs on frontend.
     function pendingALD(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
