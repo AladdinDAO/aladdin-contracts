@@ -71,7 +71,7 @@ contract TokenMaster is Ownable {
     // ALD tokens created per block.
     uint256 public ALDPerBlock = 1 * 10 ** 14; // 0.0001 ALDs
     // Reward muliplier for token release schedule
-    uint256[] public REWARD_MULTIPLIER = [5000000, 912000, 729600, 583690, 466944, 0]; // 500, 91.2, 72.96, 58.369, 46.6944
+    uint256[] public REWARD_MULTIPLIER = [3125000, 570000, 456000, 364800, 291840, 0]; // 312.5, 57, 45.6, 36.48, 29.184
     // Initial bonus blocks
     uint256 public INITIAL_BONUS_BLOCKS = 200000; // 4 weeks
     // Reward muliplier duration
@@ -223,16 +223,15 @@ contract TokenMaster is Ownable {
             return;
         }
 
-        // Get total block rewards
+        // Get total pool rewards
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 blockRewards = multiplier.mul(ALDPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+        uint256 poolRewards = multiplier.mul(ALDPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
 
         // Update distributor rewards
-        uint256 distributorRewards = blockRewards.mul(tokenDistributorAllocMin).div(tokenDistributorAllocMax);
+        uint256 distributorRewards = poolRewards.mul(tokenDistributorAllocMin).div(tokenDistributorAllocMax);
         ALD.mint(tokenDistributor, distributorRewards);
 
         // Update pool rewards
-        uint256 poolRewards = blockRewards.sub(distributorRewards);
         ALD.mint(address(this), poolRewards);
         pool.accALDPerShare = pool.accALDPerShare.add(poolRewards.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
