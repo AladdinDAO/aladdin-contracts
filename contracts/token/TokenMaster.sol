@@ -63,7 +63,7 @@ contract TokenMaster is Ownable {
     // token distributor address.
     address public tokenDistributor;
     // token distributor reward allocation = reward amount * tokenDistributorAllocMin / tokenDistributorAllocMax
-    uint256 public tokenDistributorAllocMin = 6000;
+    uint256 public tokenDistributorAllocMin = 15000;
     uint256 constant public tokenDistributorAllocMax = 10000;
 
     // The block number when ALD mining starts.
@@ -71,7 +71,7 @@ contract TokenMaster is Ownable {
     // ALD tokens created per block.
     uint256 public ALDPerBlock = 1 * 10 ** 14; // 0.0001 ALDs
     // Reward muliplier for token release schedule
-    uint256[] public REWARD_MULTIPLIER = [3125000, 570000, 456000, 364800, 291840, 0]; // 312.5, 57, 45.6, 36.48, 29.184
+    uint256[] public REWARD_MULTIPLIER = [2000000, 364811, 291848, 233478, 186782, 0]; // 200, 36.4811, 29.1848, 23.3478, 18.6782
     // Initial bonus blocks
     uint256 public INITIAL_BONUS_BLOCKS = 200000; // 4 weeks
     // Reward muliplier duration
