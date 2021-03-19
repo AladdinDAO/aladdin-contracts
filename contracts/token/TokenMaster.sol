@@ -71,7 +71,7 @@ contract TokenMaster is Ownable {
     // ALD tokens created per block.
     uint256 public ALDPerBlock = 1 * 10 ** 14; // 0.0001 ALDs
     // Reward muliplier for token release schedule
-    uint256[] public REWARD_MULTIPLIER = [2000000, 364811, 291848, 233478, 186782, 0]; // 200, 36.4811, 29.1848, 23.3478, 18.6782
+    uint256[] public REWARD_MULTIPLIER = [2000000, 364800, 291840, 233472, 186777, 0]; // 200, 36.4800, 29.1840, 23.3472, 18.6777
     // Initial bonus blocks
     uint256 public INITIAL_BONUS_BLOCKS = 200000; // 4 weeks
     // Reward muliplier duration
