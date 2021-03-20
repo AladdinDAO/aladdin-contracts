@@ -42,7 +42,7 @@ Contracts for DAO and treasury
 
 #### USDT Compound Strategy
 - Vault - `0x1411a1a5B73C057Ed7B61246A17E892c11339f3D`
-- StrategyUSDTCompound - `0x8397DF73E3e9381dFFbCBEb513AE73cfF5474C34`
+- StrategyCompoundUSDT - `0x8397DF73E3e9381dFFbCBEb513AE73cfF5474C34`
 
 #### Test Tokens
 - Use Compound.finance on Kovan to get USDC, USDT from faucet for testing
@@ -65,7 +65,7 @@ Contracts for DAO and treasury
 
 #### Strategies
 - VaultUSDTCompound - `0xF811258C54e25cD3129fD3Df66EE0b072C664211`
-- StrategyUSDTCompound - `0x5f8Cf004d06fF3900Eb8bb396049d84f352dB862`
+- StrategyCompoundUSDT - `0x5f8Cf004d06fF3900Eb8bb396049d84f352dB862`
 
 - VaultCurveAave3Pool - `0x5d53Af8E8464859872187cE39d671A5306FD13fc`
 - StrategyCurveAave3Pool - `0x227281227836a638929fa62FDB4FD1B700E1BCec`

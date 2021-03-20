@@ -1,7 +1,7 @@
 // ============ Contracts ============
 
 const Controller = artifacts.require('Controller')
-const StrategyUSDTCompound = artifacts.require('StrategyUSDTCompound')
+const StrategyCompoundUSDT = artifacts.require('StrategyCompoundUSDT')
 const VaultUSDTCompound = artifacts.require('VaultUSDTCompound')
 const TokenMaster = artifacts.require('TokenMaster')
 
@@ -9,7 +9,7 @@ const TokenMaster = artifacts.require('TokenMaster')
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    deployStrategyUSDTCompound(deployer, network),
+    deployStrategyCompoundUSDT(deployer, network),
   ]);
 };
 
@@ -17,16 +17,16 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function deployStrategyUSDTCompound(deployer, network) {
+async function deployStrategyCompoundUSDT(deployer, network) {
   const controller = await Controller.deployed();
 
   await deployer.deploy(
-    StrategyUSDTCompound,
+    StrategyCompoundUSDT,
     controller.address
   )
 
   const vault = await VaultUSDTCompound.deployed();
-  const strategy = await StrategyUSDTCompound.deployed()
+  const strategy = await StrategyCompoundUSDT.deployed()
   const tokenMaster = await TokenMaster.deployed();
 
   await controller.setStrategy(vault.address, strategy.address)

@@ -12,7 +12,7 @@ interface Comptroller {
     function claimComp(address holder) external;
 }
 
-contract StrategyUSDTCompound is BaseStrategy {
+contract StrategyCompoundUSDT is BaseStrategy {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
