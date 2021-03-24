@@ -2,13 +2,13 @@
 
 const Controller = artifacts.require('Controller')
 const TokenMaster = artifacts.require('TokenMaster')
-const VaultUSDTCompound = artifacts.require('VaultUSDTCompound')
+const VaultCompoundUSDT = artifacts.require('VaultCompoundUSDT')
 
 // ============ Main Migration ============
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    deployVaultUSDTCompound(deployer, network),
+    deployVaultCompoundUSDT(deployer, network),
   ]);
 };
 
@@ -16,12 +16,12 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function deployVaultUSDTCompound(deployer, network) {
+async function deployVaultCompoundUSDT(deployer, network) {
   const controller = await Controller.deployed();
   const tokenMaster = await TokenMaster.deployed();
 
   await deployer.deploy(
-    VaultUSDTCompound,
+    VaultCompoundUSDT,
     controller.address,
     tokenMaster.address
   )

@@ -2,7 +2,7 @@ pragma solidity 0.6.12;
 
 import "./BaseVault.sol";
 
-contract VaultUSDTCompound is BaseVault {
+contract VaultCompoundUSDT is BaseVault {
     constructor (
           address _controller,
           address _tokenMaster)
