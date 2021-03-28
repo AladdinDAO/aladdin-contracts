@@ -70,11 +70,13 @@ abstract contract BaseStrategy {
 
     function setManagementFee(uint _managementFee) external {
         require(msg.sender == governance, "!governance");
+        require(_managementFee < max, "over max");
         managementFee = _managementFee;
     }
 
     function setPerformanceFee(uint _performanceFee) external {
         require(msg.sender == governance, "!governance");
+        require(_performanceFee < max, "over max");
         performanceFee = _performanceFee;
     }
 

@@ -193,16 +193,19 @@ abstract contract BaseVault is ERC20 {
 
   function setAvailableMin(uint _availableMin) external {
       require(msg.sender == governance, "!governance");
+      require(_availableMin < MAX, "over max");
       availableMin = _availableMin;
   }
 
   function setFarmKeeperFeeMin(uint _farmKeeperFeeMin) external {
       require(msg.sender == governance, "!governance");
+      require(_farmKeeperFeeMin < MAX, "over max");
       farmKeeperFeeMin = _farmKeeperFeeMin;
   }
 
   function setHarvestKeeperFeeMin(uint _harvestKeeperFeeMin) external {
       require(msg.sender == governance, "!governance");
+      require(_harvestKeeperFeeMin < MAX, "over max");
       harvestKeeperFeeMin = _harvestKeeperFeeMin;
   }
 
