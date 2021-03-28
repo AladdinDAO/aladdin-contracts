@@ -26,7 +26,8 @@ abstract contract BaseVault is ERC20 {
   uint public availableMin = 9500;
   uint public farmKeeperFeeMin = 10;
   uint public harvestKeeperFeeMin = 500;
-  uint public constant max = 10000;
+  uint public constant MAX = 10000;
+  uint public constant MINIMUM_SHARE = 10**3;
 
   uint public rewardsPerShareStored;
   mapping(address => uint256) public userRewardPerSharePaid;
@@ -67,7 +68,7 @@ abstract contract BaseVault is ERC20 {
   // Custom logic in here for how much the vault allows to be borrowed
   // Sets minimum required on-hand to keep small withdrawals cheap
   function available() public view returns (uint) {
-      return token.balanceOf(address(this)).mul(availableMin).div(max);
+      return token.balanceOf(address(this)).mul(availableMin).div(MAX);
   }
 
   function getPricePerFullShare() public view returns (uint) {
@@ -88,7 +89,8 @@ abstract contract BaseVault is ERC20 {
 
       uint shares = 0;
       if (_pool == 0) {
-        shares = _amount;
+        shares = _amount.sub(MINIMUM_SHARE);
+        _mint(address(0), MINIMUM_SHARE); // permanently lock the first MINIMUM_SHARE tokens
       } else {
         shares = (_amount.mul(totalSupply())).div(_pool);
       }
@@ -152,7 +154,7 @@ abstract contract BaseVault is ERC20 {
   function farm() public {
       uint _bal = available();
 
-      uint keeperFee = _bal.mul(farmKeeperFeeMin).div(max);
+      uint keeperFee = _bal.mul(farmKeeperFeeMin).div(MAX);
       token.safeTransfer(msg.sender, keeperFee);
 
       uint amountLessFee = _bal.sub(keeperFee);
@@ -170,7 +172,7 @@ abstract contract BaseVault is ERC20 {
       uint _rewardAfter = rewardToken.balanceOf(address(this));
 
       uint harvested = _rewardAfter.sub(_rewardBefore);
-      uint keeperFee = harvested.mul(harvestKeeperFeeMin).div(max);
+      uint keeperFee = harvested.mul(harvestKeeperFeeMin).div(MAX);
       rewardToken.safeTransfer(msg.sender, keeperFee);
 
       uint newRewardAmount = harvested.sub(keeperFee);
