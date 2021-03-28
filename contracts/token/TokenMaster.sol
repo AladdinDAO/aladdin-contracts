@@ -63,9 +63,9 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     ALDToken public ALD;
     // token distributor address.
     address public tokenDistributor;
-    // token distributor reward allocation = reward amount * tokenDistributorAllocMin / tokenDistributorAllocMax
-    uint256 public tokenDistributorAllocMin = 15000;
-    uint256 constant public tokenDistributorAllocMax = 10000;
+    // token distributor reward allocation = reward amount * tokenDistributorAllocNume / tokenDistributorAllocDenom
+    uint256 public tokenDistributorAllocNume = 15000;
+    uint256 constant public tokenDistributorAllocDenom = 10000;
 
     // The block number when ALD mining starts.
     uint256 public startBlock;
@@ -229,7 +229,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
         uint256 poolRewards = multiplier.mul(ALDPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
 
         // Update distributor rewards
-        uint256 distributorRewards = poolRewards.mul(tokenDistributorAllocMin).div(tokenDistributorAllocMax);
+        uint256 distributorRewards = poolRewards.mul(tokenDistributorAllocNume).div(tokenDistributorAllocDenom);
         ALD.mint(tokenDistributor, distributorRewards);
 
         // Update pool rewards
@@ -281,8 +281,8 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     }
 
     // Update token distributor allocation.
-    function setTokenDistributorAllocMin(uint256 _tokenDistributorAllocMin) public onlyOwner {
-        tokenDistributorAllocMin = _tokenDistributorAllocMin;
+    function setTokenDistributorAllocMin(uint256 _tokenDistributorAllocNume) public onlyOwner {
+        tokenDistributorAllocNume = _tokenDistributorAllocNume;
     }
 
     // Update Rewards Per Block
