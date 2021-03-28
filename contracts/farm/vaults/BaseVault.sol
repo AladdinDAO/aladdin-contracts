@@ -163,7 +163,8 @@ abstract contract BaseVault is ERC20 {
   }
 
   // Keepers call harvest() to claim rewards from strategy
-  function harvest() external {
+  // harvest() is marked as onlyEOA to prevent sandwich/MEV attack to collect most rewards through a flash-deposit() follow by a claim
+  function harvest() external onlyEOA {
       uint _rewardBefore = rewardToken.balanceOf(address(this));
       IController(controller).harvest(address(this));
       uint _rewardAfter = rewardToken.balanceOf(address(this));
@@ -216,6 +217,13 @@ abstract contract BaseVault is ERC20 {
   function setTokenMaster(address _tokenMaster) public {
       require(msg.sender == governance, "!governance");
       tokenMaster = _tokenMaster;
+  }
+
+  /* ========== MODIFIERS ========== */
+
+  modifier onlyEOA() {
+      require(msg.sender == tx.origin, "!EOA");
+       _;
   }
 
   /* ========== EVENTS ========== */
