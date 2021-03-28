@@ -7,6 +7,7 @@ import "../common/SafeERC20.sol";
 
 import "../interfaces/IController.sol";
 import "../interfaces/IStrategy.sol";
+import "../interfaces/IVault.sol";
 
 // Forked from the original yearn Controller (https://github.com/yearn/yearn-protocol/blob/develop/contracts/controllers/Controller.sol) with the following changes:
 // - change mapping of vault and strategy from token -> vault, token -> strategy to vault <-> strategy
@@ -73,6 +74,7 @@ contract Controller is IController {
 
     function setStrategy(address _vault, address _strategy) public {
         require(msg.sender == governance, "!governance");
+        require(IStrategy(_strategy).want() == IVault(_vault).token(), "unmatching want tokens between vault and strategy");
 
         address _current = strategies[_vault];
         if (_current != address(0)) {
