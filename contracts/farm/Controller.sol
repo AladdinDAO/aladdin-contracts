@@ -26,9 +26,6 @@ contract Controller is IController {
     // Vault to strategy mapping
     mapping(address => address) public strategies;
 
-    uint public split = 500;
-    uint public constant max = 10000;
-
     /* ========== CONSTRUCTOR ========== */
 
     constructor() public {
@@ -61,11 +58,6 @@ contract Controller is IController {
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
-
-    function setSplit(uint _split) public {
-        require(msg.sender == governance, "!governance");
-        split = _split;
-    }
 
     function setGovernance(address _governance) public {
         require(msg.sender == governance, "!governance");
