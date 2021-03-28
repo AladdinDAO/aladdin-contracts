@@ -5,9 +5,10 @@ import "../common/IERC20.sol";
 import "../common/Address.sol";
 import "../common/SafeERC20.sol";
 import "../common/ERC20.sol";
+import "../common/ReentrancyGuard.sol";
 
 // A funding contract that allows purchase of shares
-contract DAO is ERC20 {
+contract DAO is ERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -66,7 +67,7 @@ contract DAO is ERC20 {
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     // fund the dao and get shares
-    function fund(uint _shares) external onlyWhitelist {
+    function fund(uint _shares) external nonReentrant onlyWhitelist {
         require(shares[msg.sender].add(_shares) <= shareCap, "!over cap");
 
         uint w = _shares.mul(rate);

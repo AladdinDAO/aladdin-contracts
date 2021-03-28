@@ -4,13 +4,14 @@ import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
 import "../common/SafeMath.sol";
 import "../common/Ownable.sol";
+import "../common/ReentrancyGuard.sol";
 import "./ALDToken.sol";
 
 // Forked from the original Sushiswap's ChefMaster contract (https://github.com/sushiswap/sushiswap/blob/master/contracts/MasterChef.sol) with the following changes:
 // - Add mechanism allow changing reward multpliers on a scheduled timeline
 // - Style changes
 
-contract TokenMaster is Ownable {
+contract TokenMaster is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -154,7 +155,7 @@ contract TokenMaster is Ownable {
     /* ========== USER MUTATIVE FUNCTONS ========== */
 
     // Deposit LP tokens to TokenMaster for ALD allocation.
-    function deposit(uint256 _pid, uint256 _amount) public {
+    function deposit(uint256 _pid, uint256 _amount) public nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
