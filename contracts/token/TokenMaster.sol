@@ -155,7 +155,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     /* ========== USER MUTATIVE FUNCTONS ========== */
 
     // Deposit LP tokens to TokenMaster for ALD allocation.
-    function deposit(uint256 _pid, uint256 _amount) public nonReentrant {
+    function deposit(uint256 _pid, uint256 _amount) public onlyValidPool(_pid) nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
@@ -300,5 +300,12 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     // Update Halving At Block
     function setChangeMulAtBlock(uint256[] memory _newChangeMul) public onlyOwner {
         CHANGE_MULTIPLIER_AT_BLOCK = _newChangeMul;
+    }
+
+    /* ========== MODIFIERS ========== */
+
+    modifier onlyValidPool(uint256 _pid) {
+        require(_pid < poolInfo.length, "pool does not exist");
+        _;
     }
 }
