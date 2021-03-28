@@ -254,7 +254,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public onlyOwner {
+    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public checkDuplicatePool(_lpToken) onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -306,6 +306,13 @@ contract TokenMaster is Ownable, ReentrancyGuard {
 
     modifier onlyValidPool(uint256 _pid) {
         require(_pid < poolInfo.length, "pool does not exist");
+        _;
+    }
+
+    modifier checkDuplicatePool(IERC20 _lpToken) {
+        for (uint256 pid = 0; pid < poolInfo.length; pid++) {
+            require(poolInfo[pid].lpToken != _lpToken,  "pool already exist");
+        }
         _;
     }
 }
