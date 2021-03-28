@@ -35,7 +35,7 @@ contract StrategyCurveRenWBTC is BaseStrategy {
     /* ========== VIEW FUNCTIONS ========== */
 
     function getName() external pure virtual override returns (string memory) {
-        return "StrategyCurveSETH";
+        return "StrategyCurveRenWBTC";
     }
 
     function balanceOf() public view virtual override returns (uint) {
