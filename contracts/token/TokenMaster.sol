@@ -106,7 +106,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
         uint256 bonusEndBlock = startBlock.add(INITIAL_BONUS_BLOCKS);
         CHANGE_MULTIPLIER_AT_BLOCK.push(bonusEndBlock);
         for (uint256 i = 1; i < REWARD_MULTIPLIER.length - 1; i++) {
-            uint256 changeMultiplierAtBlock = bonusEndBlock.add(BLOCKS_PER_MULTIPLIER.mul(i+1));
+            uint256 changeMultiplierAtBlock = bonusEndBlock.add(BLOCKS_PER_MULTIPLIER.mul(i));
             CHANGE_MULTIPLIER_AT_BLOCK.push(changeMultiplierAtBlock);
         }
         CHANGE_MULTIPLIER_AT_BLOCK.push(uint256(-1));
