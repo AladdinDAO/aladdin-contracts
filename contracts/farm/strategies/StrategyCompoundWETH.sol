@@ -36,6 +36,11 @@ contract StrategyCompoundWETH is BaseStrategy {
 
     }
 
+    /* ========== EXTERNAL FUNCTIONS ========== */
+
+    // make strategy receivable of ETH for WETH <-> ETH conversion
+    receive() external payable{}
+
     /* ========== VIEW FUNCTIONS ========== */
 
     function getName() external pure virtual override returns (string memory) {

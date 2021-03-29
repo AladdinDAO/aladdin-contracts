@@ -24,9 +24,9 @@ abstract contract BaseVault is ERC20 {
   IERC20 public rewardToken;
 
   uint public availableMin = 9500;
-  uint public farmKeeperFeeMin = 10;
-  uint public harvestKeeperFeeMin = 500;
-  uint public constant max = 10000;
+  uint public farmKeeperFeeMin = 0;
+  uint public harvestKeeperFeeMin = 0;
+  uint public constant MAX = 10000;
 
   uint public rewardsPerShareStored;
   mapping(address => uint256) public userRewardPerSharePaid;
@@ -67,7 +67,7 @@ abstract contract BaseVault is ERC20 {
   // Custom logic in here for how much the vault allows to be borrowed
   // Sets minimum required on-hand to keep small withdrawals cheap
   function available() public view returns (uint) {
-      return token.balanceOf(address(this)).mul(availableMin).div(max);
+      return token.balanceOf(address(this)).mul(availableMin).div(MAX);
   }
 
   function getPricePerFullShare() public view returns (uint) {
@@ -152,7 +152,7 @@ abstract contract BaseVault is ERC20 {
   function farm() public {
       uint _bal = available();
 
-      uint keeperFee = _bal.mul(farmKeeperFeeMin).div(max);
+      uint keeperFee = _bal.mul(farmKeeperFeeMin).div(MAX);
       token.safeTransfer(msg.sender, keeperFee);
 
       uint amountLessFee = _bal.sub(keeperFee);
@@ -170,7 +170,7 @@ abstract contract BaseVault is ERC20 {
       uint _rewardAfter = rewardToken.balanceOf(address(this));
 
       uint harvested = _rewardAfter.sub(_rewardBefore);
-      uint keeperFee = harvested.mul(harvestKeeperFeeMin).div(max);
+      uint keeperFee = harvested.mul(harvestKeeperFeeMin).div(MAX);
       rewardToken.safeTransfer(msg.sender, keeperFee);
 
       uint newRewardAmount = harvested.sub(keeperFee);
@@ -191,19 +191,19 @@ abstract contract BaseVault is ERC20 {
 
   function setAvailableMin(uint _availableMin) external {
       require(msg.sender == governance, "!governance");
-      require(_availableMin < MAX, "over max");
+      require(_availableMin < MAX, "over MAX");
       availableMin = _availableMin;
   }
 
   function setFarmKeeperFeeMin(uint _farmKeeperFeeMin) external {
       require(msg.sender == governance, "!governance");
-      require(_farmKeeperFeeMin < MAX, "over max");
+      require(_farmKeeperFeeMin < MAX, "over MAX");
       farmKeeperFeeMin = _farmKeeperFeeMin;
   }
 
   function setHarvestKeeperFeeMin(uint _harvestKeeperFeeMin) external {
       require(msg.sender == governance, "!governance");
-      require(_harvestKeeperFeeMin < MAX, "over max");
+      require(_harvestKeeperFeeMin < MAX, "over MAX");
       harvestKeeperFeeMin = _harvestKeeperFeeMin;
   }
 
