@@ -2,6 +2,7 @@
 
 const ALDToken = artifacts.require('ALDToken')
 const ISwapFactory = artifacts.require('ISwapFactory')
+const TokenMaster = artifacts.require('TokenMaster')
 
 // ============ Main Migration ============
 
@@ -31,4 +32,8 @@ async function deployLP(deployer, network) {
   } else {
     console.log("USDC and ALD pair already exist in uniswap: " + USDC_ALD_LP_ADDRESS);
   }
+
+  // add to tokenmaster
+  const tokenMaster = await TokenMaster.deployed();
+  await tokenMaster.add("100", USDC_ALD_LP_ADDRESS, true)
 }
