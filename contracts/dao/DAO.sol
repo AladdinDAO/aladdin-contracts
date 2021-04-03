@@ -36,7 +36,7 @@ contract DAO is ERC20, ReentrancyGuard {
     )
         public
         ERC20 (
-          string(abi.encodePacked("Aladdin DAO")),
+          string(abi.encodePacked("Aladdin DAO Token")),
           string(abi.encodePacked("ALDDAO"))
         )
     {

@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 import "../common/ERC20.sol";
 
 // Standard ERC20 token with mint and burn
-contract ALDToken is ERC20("Aladdin DAO Token", "ALD") {
+contract ALDToken is ERC20("Aladdin Token", "ALD") {
     address public governance;
     mapping (address => bool) public isMinter;
 

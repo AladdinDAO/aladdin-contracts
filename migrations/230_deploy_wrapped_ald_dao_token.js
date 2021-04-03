@@ -1,6 +1,6 @@
 // ============ Contracts ============
 
-const ALDToken = artifacts.require('ALDToken')
+const DAO = artifacts.require('DAO')
 const WrappedERC20 = artifacts.require('WrappedERC20')
 
 // ============ Main Migration ============
@@ -16,6 +16,6 @@ module.exports = migration;
 // ============ Deploy Functions ============
 
 async function deployWrappedERC20(deployer, network) {
-  const aldToken = await ALDToken.deployed();
-  await deployer.deploy(WrappedERC20, aldToken.address, "Wrapped Aladdin Token", "wALD")
+  const aldDAOToken = await DAO.deployed();
+  await deployer.deploy(WrappedERC20, aldDAOToken.address, "Wrapped Aladdin DAO Token", "wALDDAO")
 }
