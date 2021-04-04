@@ -191,6 +191,21 @@ contract TokenMaster is Ownable, ReentrancyGuard {
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
+    // Claim pending rewards for one or more pools.
+    function claim(uint256[] calldata _pids) external {
+        _massUpdatePools();
+        uint256 pending;
+        for (uint i = 0; i < _pids.length; i++) {
+            PoolInfo storage pool = poolInfo[_pids[i]];
+            UserInfo storage user = userInfo[_pids[i]][msg.sender];
+            pending = pending.add(user.amount.mul(pool.accALDPerShare).div(1e12).sub(user.rewardDebt));
+            user.rewardDebt = user.amount.mul(pool.accALDPerShare).div(1e12);
+        }
+        if (pending > 0) {
+            safeALDTransfer(msg.sender, pending);
+        }
+    }
+
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) public {
         PoolInfo storage pool = poolInfo[_pid];
