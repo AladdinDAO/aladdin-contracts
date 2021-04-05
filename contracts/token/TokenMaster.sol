@@ -193,7 +193,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
 
     // Claim pending rewards for one or more pools.
     function claim(uint256[] calldata _pids) external {
-        _massUpdatePools();
+        massUpdatePools();
         uint256 pending;
         for (uint i = 0; i < _pids.length; i++) {
             PoolInfo storage pool = poolInfo[_pids[i]];
