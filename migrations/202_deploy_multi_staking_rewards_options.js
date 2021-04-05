@@ -9,7 +9,7 @@ const MultiStakingRewards = artifacts.require('MultiStakingRewards')
 
 const migration = async (deployer, network, accounts) => {
   await Promise.all([
-    deployMultiStakingRewards(deployer, network),
+    deployMultiStakingRewardsOptions(deployer, network),
   ]);
 };
 
@@ -17,7 +17,7 @@ module.exports = migration;
 
 // ============ Deploy Functions ============
 
-async function deployMultiStakingRewards(deployer, network) {
+async function deployMultiStakingRewardsOptions(deployer, network) {
   const aldToken = await ALDToken.deployed();
   const wALDToken = await WrappedERC20.deployed();
   const rewardDistributor = await RewardDistributor.deployed();
@@ -28,4 +28,7 @@ async function deployMultiStakingRewards(deployer, network) {
     wALDToken.address,
     rewardDistributor.address
   )
+
+  const multiStakingRewards = await MultiStakingRewards.deployed()
+  await multiStakingRewards.addRewardPool(wALDToken.address, 378432000) // 12 month
 }
