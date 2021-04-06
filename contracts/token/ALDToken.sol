@@ -29,7 +29,7 @@ contract ALDToken is ERC20("Aladdin Token", "ALD") {
 
     /// @notice Burn `_amount` token from `_from`. Must only be called by governance
     function burn(address _from, uint256 _amount) public {
-      require(msg.sender == governance, "!governance");
+        require(msg.sender == governance, "!governance");
         _burn(_from, _amount);
     }
 }
