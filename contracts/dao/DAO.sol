@@ -26,6 +26,9 @@ contract DAO is ERC20, ReentrancyGuard {
 
     mapping(address => uint) public shares; // Tracking of shares of funders to avoid going over sharesCap
 
+    mapping(address => bool) public allowTransferFrom;
+    mapping(address => bool) public allowTransferTo;
+
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
@@ -91,6 +94,17 @@ contract DAO is ERC20, ReentrancyGuard {
         return IERC20(_token).balanceOf(address(this));
     }
 
+    /* ========== INTERNAL FUNCTIONS ========== */
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
+        require(allowTransferFrom[from] == true, "sender not allowed");
+        require(allowTransferFrom[to] == true, "recipient not allowed");
+        // Silence warnings
+        from;
+        to;
+        amount;
+    }
+
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     function takeOut(
@@ -131,6 +145,20 @@ contract DAO is ERC20, ReentrancyGuard {
         onlyGov
     {
         shareCap = _shareCap;
+    }
+
+    function setAllowTransferFrom(address _addr, bool _bool)
+        public
+        onlyGov
+    {
+        allowTransferFrom[_addr] = _bool;
+    }
+
+    function setAllowTransferTo(address _addr, bool _bool)
+        public
+        onlyGov
+    {
+      allowTransferTo[_addr] = _bool;
     }
 
     function addToWhitelist(address _user)
