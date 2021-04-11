@@ -97,12 +97,18 @@ contract DAO is ERC20, ReentrancyGuard {
     /* ========== INTERNAL FUNCTIONS ========== */
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        require(allowTransferFrom[from] == true, "sender not allowed");
-        require(allowTransferFrom[to] == true, "recipient not allowed");
         // Silence warnings
         from;
         to;
         amount;
+
+        // allow mint and burn
+        if (from == address(0) || to == address(0)) {
+            return;
+        }
+
+        // either sender or recipient needs to be whitelisted for transfer
+        require(allowTransferFrom[from] == true || allowTransferTo[to] == true, "transfer not allowed");
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -158,7 +164,7 @@ contract DAO is ERC20, ReentrancyGuard {
         public
         onlyGov
     {
-      allowTransferTo[_addr] = _bool;
+        allowTransferTo[_addr] = _bool;
     }
 
     function addToWhitelist(address _user)
