@@ -32,7 +32,7 @@ async function deployMultiStakingRewardsDAO(deployer, network) {
   )
 
   const multiStakingRewards = await MultiStakingRewards.deployed()
-  await multiStakingRewards.addRewardPool(wALDDAOToken.address, 31557600) // 12 month
+  await multiStakingRewards.addRewardPool(wALDDAOToken.address, 86400) // 1 day
 
   await aldDAOToken.setAllowTransferTo(multiStakingRewards.address, true)
   await aldDAOToken.setAllowTransferFrom(multiStakingRewards.address, true)
