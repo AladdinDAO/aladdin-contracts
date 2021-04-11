@@ -3,43 +3,45 @@ pragma solidity 0.6.12;
 import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
 
-// A simple token distributor that takes any ERC20 token, and allows Fund Manager roles to transfer token to recipients.
+// TokenDistributor allows anyone to distribute tokens according to governance defined allocations
 contract TokenDistributor {
     using SafeERC20 for IERC20;
+    using SafeMath for uint;
 
     /* ========== STATE VARIABLES ========== */
 
     address public governance;
-    mapping(address => bool) public fundManager;
+
+    address[] public recipients;
+    uint256[] public percentages;
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
-        address[] memory _fundManagers
-    )
+    constructor()
         public
     {
         governance = msg.sender;
-
-        for(uint256 i = 0; i < _fundManagers.length; i++) {
-            fundManager[_fundManagers[i]] = true;
-        }
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function addFundManager(address _address)
+    // Must set recipient and percentages in single tx to avoid discrepency of length
+    function setAllocations(
+        address[] calldata _recipients,
+        uint256[] calldata _percentages
+    )
         external
         onlyGov
     {
-        fundManager[_address] = true;
-    }
+        require(_recipients.length == _percentages.length, "length does not match");
+        uint total = 0;
+        for (uint i=0; i<_percentages.length; i++) {
+            total = total + _percentages[i];
+        }
+        require(total == 100, "total percentage is not 100");
 
-    function removeFundManager(address _address)
-        external
-        onlyGov
-    {
-        fundManager[_address] = false;
+        recipients = _recipients;
+        percentages = _percentages;
     }
 
     // Allow governance to rescue rewards
@@ -53,27 +55,23 @@ contract TokenDistributor {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function distributeTokens(
-        address[] calldata _recipients,
-        IERC20[] calldata _tokens,
-        uint256[] calldata _amounts
+    function distributeToken(
+        IERC20 _token
     )
         external
-        onlyFundManager
     {
-        uint256 len = _recipients.length;
-        require(len > 0, "Must choose recipients");
-        require(len == _tokens.length, "Mismatching inputs");
-        require(len == _amounts.length, "Mismatching inputs");
+        uint total = _token.balanceOf(address(this));
+        if (total == 0) {
+            return;
+        }
 
-        for(uint i = 0; i < len; i++){
-            uint256 amount = _amounts[i];
-            IERC20 rewardToken = _tokens[i];
-            address recipient = _recipients[i];
+        for(uint i = 0; i < recipients.length; i++){
+            uint256 amount = total.mul(percentages[i]).div(100);
+            address recipient = recipients[i];
             // Send the RewardToken to recipient
-            rewardToken.safeTransfer(recipient, amount);
+            _token.safeTransfer(recipient, amount);
 
-            emit DistributedToken(msg.sender, recipient, address(rewardToken), amount);
+            emit DistributedToken(recipient, address(_token), amount);
         }
     }
 
@@ -84,12 +82,7 @@ contract TokenDistributor {
         _;
     }
 
-    modifier onlyFundManager() {
-        require(fundManager[msg.sender] == true, "!manager");
-        _;
-    }
-
     /* ========== EVENTS ========== */
 
-    event DistributedToken(address funder, address recipient, address rewardToken, uint256 amount);
+    event DistributedToken(address recipient, address rewardToken, uint256 amount);
 }
