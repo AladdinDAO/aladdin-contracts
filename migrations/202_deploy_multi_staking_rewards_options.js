@@ -30,5 +30,5 @@ async function deployMultiStakingRewardsOptions(deployer, network) {
   )
 
   const multiStakingRewards = await MultiStakingRewards.deployed()
-  await multiStakingRewards.addRewardPool(wALDToken.address, 378432000) // 12 month
+  await multiStakingRewards.addRewardPool(wALDToken.address, 31557600) // 12 month
 }
