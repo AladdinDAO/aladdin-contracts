@@ -19,7 +19,8 @@ module.exports = migration;
 async function deployTokenMaster(deployer, network) {
   const aldToken = await ALDToken.deployed();
   const tokenDistributor = await TokenDistributor.deployed();
-  await deployer.deploy(TokenMaster, aldToken.address, tokenDistributor.address)
+  const startBlock = '99999999999999999' // temporary
+  await deployer.deploy(TokenMaster, aldToken.address, tokenDistributor.address, startBlock)
 
   const tokenMaster = await TokenMaster.deployed();
   await aldToken.setMinter(tokenMaster.address, true)

@@ -97,11 +97,12 @@ contract TokenMaster is Ownable, ReentrancyGuard {
 
     constructor(
         ALDToken _ALD,
-        address _tokenDistributor
+        address _tokenDistributor,
+        uint256 _startBlock
     ) public {
         ALD = _ALD;
         tokenDistributor = _tokenDistributor;
-        startBlock = block.number;
+        startBlock = _startBlock;
 
         uint256 bonusEndBlock = startBlock.add(INITIAL_BONUS_BLOCKS);
         CHANGE_MULTIPLIER_AT_BLOCK.push(bonusEndBlock);
