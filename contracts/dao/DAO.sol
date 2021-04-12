@@ -8,7 +8,7 @@ import "../common/ERC20.sol";
 import "../common/ReentrancyGuard.sol";
 
 // A funding contract that allows purchase of shares
-contract DAO is ERC20, ReentrancyGuard {
+contract DAO is ERC20("Aladdin DAO Token", "ALDDAO"), ReentrancyGuard {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -38,11 +38,8 @@ contract DAO is ERC20, ReentrancyGuard {
         address[] memory _whitelist
     )
         public
-        ERC20 (
-          string(abi.encodePacked("Aladdin DAO Token")),
-          string(abi.encodePacked("ALDDAO"))
-        )
     {
+        _setupDecimals(0);
         want = IERC20(_want);
         rate = _rate;
         shareCap = _shareCap;
@@ -98,8 +95,6 @@ contract DAO is ERC20, ReentrancyGuard {
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
         // Silence warnings
-        from;
-        to;
         amount;
 
         // allow mint and burn
@@ -112,6 +107,16 @@ contract DAO is ERC20, ReentrancyGuard {
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
+
+    /// @notice Creates `_amount` token to `_to`. Must only be called by minter
+    function mint(address _to, uint256 _amount) public onlyGov {
+        _mint(_to, _amount);
+    }
+
+    /// @notice Burn `_amount` token from `_from`. Must only be called by governance
+    function burn(address _from, uint256 _amount) public onlyGov {
+        _burn(_from, _amount);
+    }
 
     function takeOut(
         address _token,

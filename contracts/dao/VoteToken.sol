@@ -9,7 +9,8 @@ contract VoteToken is ERC20("Aladdin Vote Token", "ALDVOTE") {
     bool public paused;
 
     constructor () public {
-        paused = false;
+        _setupDecimals(0);
+        paused = true;
         governance = msg.sender;
     }
 
@@ -46,10 +47,14 @@ contract VoteToken is ERC20("Aladdin Vote Token", "ALDVOTE") {
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-        require(!paused, "paused");
         // Silence warnings
-        from;
-        to;
         amount;
+
+        // allow mint and burn
+        if (from == address(0) || to == address(0)) {
+            return;
+        }
+
+        require(!paused, "paused");
     }
 }
