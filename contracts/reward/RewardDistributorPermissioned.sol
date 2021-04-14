@@ -2,9 +2,10 @@ pragma solidity 0.6.12;
 
 import "../common/IERC20.sol";
 import "../common/SafeERC20.sol";
+import "../interfaces/IRewardsDistributionRecipient.sol";
 
-// TokenDistributor allows anyone to distribute tokens according to governance defined allocations
-contract TokenDistributor {
+// A simple reward distributor that takes any ERC20 token, and allows anyone to send/notify reward to IRewardsDistributionRecipient based on governance permission.
+contract RewardDistributorPermissioned {
     using SafeERC20 for IERC20;
     using SafeMath for uint;
 
@@ -64,7 +65,7 @@ contract TokenDistributor {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function distributeToken(
+    function distributeRewards(
         IERC20 _token
     )
         external
@@ -81,8 +82,10 @@ contract TokenDistributor {
             address recipient = recipients[i];
             // Send the RewardToken to recipient
             _token.safeTransfer(recipient, amount);
+            // Only after successfull tx - notify the contract of the new funds
+            IRewardsDistributionRecipient(recipient).notifyRewardAmount(address(_token), amount);
 
-            emit DistributedToken(recipient, address(_token), amount);
+            emit DistributedReward(recipient, address(_token), amount);
         }
     }
 
@@ -95,5 +98,5 @@ contract TokenDistributor {
 
     /* ========== EVENTS ========== */
 
-    event DistributedToken(address recipient, address rewardToken, uint256 amount);
+    event DistributedReward(address recipient, address rewardToken, uint256 amount);
 }
