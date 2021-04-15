@@ -40,31 +40,31 @@ contract Controller is IController {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function farm(address _vault, uint _amount) public override {
+    function farm(address _vault, uint _amount) external override {
         address _strategy = strategies[_vault];
         address _want = IStrategy(_strategy).want();
         IERC20(_want).safeTransfer(_strategy, _amount);
         IStrategy(_strategy).deposit();
     }
 
-    function harvest(address _vault) public override {
+    function harvest(address _vault) external override {
         require(msg.sender == _vault, "!vault");
         IStrategy(strategies[_vault]).harvest();
     }
 
-    function withdraw(address _vault, uint _amount) public override {
+    function withdraw(address _vault, uint _amount) external override {
         require(msg.sender == _vault, "!vault");
         IStrategy(strategies[_vault]).withdraw(_amount);
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function setGovernance(address _governance) public {
+    function setGovernance(address _governance) external {
         require(msg.sender == governance, "!governance");
         governance = _governance;
     }
 
-    function setStrategy(address _vault, address _strategy) public {
+    function setStrategy(address _vault, address _strategy) external {
         require(msg.sender == governance, "!governance");
         require(IStrategy(_strategy).want() == IVault(_vault).token(), "unmatching want tokens between vault and strategy");
 
@@ -76,18 +76,18 @@ contract Controller is IController {
         vaults[_strategy] = _vault;
     }
 
-    function withdrawAll(address _strategy) public {
+    function withdrawAll(address _strategy) external {
         require(msg.sender == governance, "!governance");
         // WithdrawAll sends 'want' to 'vault'
         IStrategy(_strategy).withdrawAll();
     }
 
-    function inCaseTokensGetStuck(address _token, uint _amount) public {
+    function inCaseTokensGetStuck(address _token, uint _amount) external {
         require(msg.sender == governance, "!governance");
         IERC20(_token).safeTransfer(governance, _amount);
     }
 
-    function inCaseStrategyTokenGetStuck(address _strategy, address _token) public {
+    function inCaseStrategyTokenGetStuck(address _strategy, address _token) external {
         require(msg.sender == governance, "!governance");
         IStrategy(_strategy).withdraw(_token);
         IERC20(_token).safeTransfer(governance, IERC20(_token).balanceOf(address(this)));

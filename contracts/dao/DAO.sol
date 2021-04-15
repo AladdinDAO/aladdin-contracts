@@ -109,12 +109,12 @@ contract DAO is ERC20("Aladdin DAO Token", "ALDDAO"), ReentrancyGuard {
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     /// @notice Creates `_amount` token to `_to`. Must only be called by minter
-    function mint(address _to, uint256 _amount) public onlyGov {
+    function mint(address _to, uint256 _amount) external onlyGov {
         _mint(_to, _amount);
     }
 
     /// @notice Burn `_amount` token from `_from`. Must only be called by governance
-    function burn(address _from, uint256 _amount) public onlyGov {
+    function burn(address _from, uint256 _amount) external onlyGov {
         _burn(_from, _amount);
     }
 
@@ -123,7 +123,7 @@ contract DAO is ERC20("Aladdin DAO Token", "ALDDAO"), ReentrancyGuard {
         address _destination,
         uint _amount
     )
-        public
+        external
         onlyGov
     {
         require(_amount <= holdings(_token), "!insufficient");
@@ -131,49 +131,49 @@ contract DAO is ERC20("Aladdin DAO Token", "ALDDAO"), ReentrancyGuard {
     }
 
     function setGov(address _governance)
-        public
+        external
         onlyGov
     {
         governance = _governance;
     }
 
     function setWant(address _want)
-        public
+        external
         onlyGov
     {
         want = IERC20(_want);
     }
 
     function setRate(uint _rate)
-        public
+        external
         onlyGov
     {
         rate = _rate;
     }
 
     function setShareCap(uint _shareCap)
-        public
+        external
         onlyGov
     {
         shareCap = _shareCap;
     }
 
     function setAllowTransferFrom(address _addr, bool _bool)
-        public
+        external
         onlyGov
     {
         allowTransferFrom[_addr] = _bool;
     }
 
     function setAllowTransferTo(address _addr, bool _bool)
-        public
+        external
         onlyGov
     {
         allowTransferTo[_addr] = _bool;
     }
 
     function addToWhitelist(address _user)
-        public
+        external
         onlyGov
     {
         require(isWhitelisted[_user] == false, "already in whitelist");
@@ -182,7 +182,7 @@ contract DAO is ERC20("Aladdin DAO Token", "ALDDAO"), ReentrancyGuard {
     }
 
     function removeFromWhitelist(address _user)
-        public
+        external
         onlyGov
     {
         require(isWhitelisted[_user] == true, "not in whitelist");

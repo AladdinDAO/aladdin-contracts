@@ -46,7 +46,7 @@ contract Treasury {
         address _destination,
         uint256 _amount
     )
-        public
+        external
         onlyGov
     {
         require(_amount <= holdings(_token), "!insufficient");
@@ -57,7 +57,7 @@ contract Treasury {
         address payable _destination,
         uint256 _amount
     )
-        public
+        external
         payable
         onlyGov
     {
@@ -65,7 +65,7 @@ contract Treasury {
     }
 
     function setGov(address _governance)
-        public
+        external
         onlyGov
     {
         governance = _governance;

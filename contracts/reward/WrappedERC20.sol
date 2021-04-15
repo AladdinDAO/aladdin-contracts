@@ -19,12 +19,12 @@ contract WrappedERC20 is IWrappedERC20, ERC20 {
         underlying = IERC20(_underlying);
     }
 
-    function wrap(address _to, uint _amount) public override {
+    function wrap(address _to, uint _amount) external override {
         underlying.safeTransferFrom(msg.sender, address(this), _amount);
         _mint(_to, _amount);
     }
 
-    function unwrap(address _to, uint _amount) public override {
+    function unwrap(address _to, uint _amount) external override {
         _burn(msg.sender, _amount);
         underlying.safeTransfer(_to, _amount);
     }

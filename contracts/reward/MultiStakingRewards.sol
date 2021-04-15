@@ -141,7 +141,7 @@ contract MultiStakingRewards is IRewardsDistributionRecipient, ReentrancyGuard {
         emit Withdrawn(msg.sender, amount);
     }
 
-    function getReward(address _rewardToken) public nonReentrant updateReward(_rewardToken, msg.sender) {
+    function getReward(address _rewardToken) external nonReentrant updateReward(_rewardToken, msg.sender) {
         _getReward(_rewardToken);
     }
 
@@ -205,7 +205,7 @@ contract MultiStakingRewards is IRewardsDistributionRecipient, ReentrancyGuard {
         address _rewardToken,
         uint256 _rewardsDuration
     )
-        public
+        external
         onlyGov
     {
       rewardPools[_rewardToken] = RewardPool({
@@ -222,7 +222,7 @@ contract MultiStakingRewards is IRewardsDistributionRecipient, ReentrancyGuard {
     }
 
     // Remove pool from active list
-    function inactivateRewardPool(address _rewardToken) public onlyGov {
+    function inactivateRewardPool(address _rewardToken) external onlyGov {
         // find the index
         uint indexToDelete = 0;
         bool found = false;
@@ -239,7 +239,7 @@ contract MultiStakingRewards is IRewardsDistributionRecipient, ReentrancyGuard {
     }
 
     // In case the list gets so large and make iteration impossible
-    function inactivateRewardPoolByIndex(uint256 _index) public onlyGov {
+    function inactivateRewardPoolByIndex(uint256 _index) external onlyGov {
         _inactivateRewardPool(_index);
     }
 
@@ -253,7 +253,7 @@ contract MultiStakingRewards is IRewardsDistributionRecipient, ReentrancyGuard {
     }
 
     // Allow governance to rescue unclaimed inactive rewards
-    function rescue(address _rewardToken) public onlyGov {
+    function rescue(address _rewardToken) external onlyGov {
         require(_rewardToken != address(stakingToken), "Cannot withdraw staking token");
         RewardPool storage pool = rewardPools[_rewardToken];
         require(pool.isActive == false, "Cannot withdraw active reward token");

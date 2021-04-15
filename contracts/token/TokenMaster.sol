@@ -156,7 +156,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     /* ========== USER MUTATIVE FUNCTONS ========== */
 
     // Deposit LP tokens to TokenMaster for ALD allocation.
-    function deposit(uint256 _pid, uint256 _amount) public onlyValidPool(_pid) nonReentrant {
+    function deposit(uint256 _pid, uint256 _amount) external onlyValidPool(_pid) nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
@@ -175,7 +175,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     }
 
     // Withdraw LP tokens from TokenMaster.
-    function withdraw(uint256 _pid, uint256 _amount) public {
+    function withdraw(uint256 _pid, uint256 _amount) external {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -208,7 +208,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw(uint256 _pid) public {
+    function emergencyWithdraw(uint256 _pid) external {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         uint256 amount = user.amount;
@@ -270,7 +270,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public checkDuplicatePool(_lpToken) onlyOwner {
+    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) external checkDuplicatePool(_lpToken) onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -285,34 +285,34 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     }
 
     // Update the given pool's ALD allocation point. Can only be called by the owner.
-    function set(uint256 _pid, uint256 _allocPoint) public onlyValidPool(_pid) onlyOwner {
+    function set(uint256 _pid, uint256 _allocPoint) external onlyValidPool(_pid) onlyOwner {
         massUpdatePools();
         totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(_allocPoint);
         poolInfo[_pid].allocPoint = _allocPoint;
     }
 
     // Update token distributor address.
-    function setTokenDistributor(address _tokenDistributor) public onlyOwner {
+    function setTokenDistributor(address _tokenDistributor) external onlyOwner {
         tokenDistributor = _tokenDistributor;
     }
 
     // Update token distributor allocation.
-    function setTokenDistributorAllocMin(uint256 _tokenDistributorAllocNume) public onlyOwner {
+    function setTokenDistributorAllocMin(uint256 _tokenDistributorAllocNume) external onlyOwner {
         tokenDistributorAllocNume = _tokenDistributorAllocNume;
     }
 
     // Update Rewards Per Block
-    function setALDPerBlock(uint256[] memory _newMulReward) public onlyOwner {
+    function setALDPerBlock(uint256[] memory _newMulReward) external onlyOwner {
         REWARD_MULTIPLIER = _newMulReward;
     }
 
     // Update Rewards Mulitplier Array
-    function setRewardMul(uint256 _ALDPerBlock) public onlyOwner {
+    function setRewardMul(uint256 _ALDPerBlock) external onlyOwner {
         ALDPerBlock = _ALDPerBlock;
     }
 
     // Update Halving At Block
-    function setChangeMulAtBlock(uint256[] memory _newChangeMul) public onlyOwner {
+    function setChangeMulAtBlock(uint256[] memory _newChangeMul) external onlyOwner {
         CHANGE_MULTIPLIER_AT_BLOCK = _newChangeMul;
     }
 

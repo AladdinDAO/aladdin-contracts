@@ -55,7 +55,7 @@ contract TokenDistributor {
 
     // Allow governance to rescue rewards
     function rescue(address _rewardToken)
-        public
+        external
         onlyGov
     {
         uint _balance = IERC20(_rewardToken).balanceOf(address(this));

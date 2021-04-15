@@ -14,34 +14,34 @@ contract VoteToken is ERC20("Aladdin Vote Token", "ALDVOTE") {
         governance = msg.sender;
     }
 
-    function setGovernance(address _governance) public {
+    function setGovernance(address _governance) external {
         require(msg.sender == governance, "!governance");
         governance = _governance;
     }
 
-    function setMinter(address _minter, bool _status) public {
+    function setMinter(address _minter, bool _status) external {
         require(msg.sender == governance, "!governance");
         isMinter[_minter] = _status;
     }
 
-    function pause() public {
+    function pause() external {
         require(msg.sender == governance, "!governance");
         paused = true;
     }
 
-    function unpause() public {
+    function unpause() external {
         require(msg.sender == governance, "!governance");
         paused = false;
     }
 
     /// @notice Creates `_amount` token to `_to`. Must only be called by minter
-    function mint(address _to, uint256 _amount) public {
+    function mint(address _to, uint256 _amount) external {
         require(isMinter[msg.sender] == true, "!minter");
         _mint(_to, _amount);
     }
 
     /// @notice Burn `_amount` token from `_from`. Must only be called by governance
-    function burn(address _from, uint256 _amount) public {
+    function burn(address _from, uint256 _amount) external {
         require(msg.sender == governance, "!governance");
         _burn(_from, _amount);
     }

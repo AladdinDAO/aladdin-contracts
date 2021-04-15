@@ -149,7 +149,7 @@ abstract contract BaseVault is ERC20 {
   /* ========== KEEPER MUTATIVE FUNCTIONS ========== */
 
   // Keepers call farm() to send funds to strategy
-  function farm() public {
+  function farm() external {
       uint _bal = available();
 
       uint keeperFee = _bal.mul(farmKeeperFeeMin).div(MAX);
