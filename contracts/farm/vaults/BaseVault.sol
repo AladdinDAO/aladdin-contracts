@@ -173,7 +173,9 @@ abstract contract BaseVault is ERC20 {
 
       uint harvested = _rewardAfter.sub(_rewardBefore);
       uint keeperFee = harvested.mul(harvestKeeperFeeMin).div(MAX);
-      rewardToken.safeTransfer(msg.sender, keeperFee);
+      if (keeperFee > 0) {
+          rewardToken.safeTransfer(msg.sender, keeperFee);
+      }
 
       uint newRewardAmount = harvested.sub(keeperFee);
       // distribute new rewards to current shares evenly
