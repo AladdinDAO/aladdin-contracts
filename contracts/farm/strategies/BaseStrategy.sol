@@ -95,7 +95,7 @@ abstract contract BaseStrategy {
         _claimReward();
 
         uint _balance = IERC20(reward).balanceOf(address(this));
-
+        require(_balance > 0, "!_balance");
         uint256 _fee = _balance.mul(performanceFee).div(max);
         IERC20(reward).safeTransfer(strategist, _fee);
 
