@@ -153,7 +153,9 @@ abstract contract BaseVault is ERC20 {
       uint _bal = available();
 
       uint keeperFee = _bal.mul(farmKeeperFeeMin).div(MAX);
-      token.safeTransfer(msg.sender, keeperFee);
+      if (keeperFee > 0) {
+          token.safeTransfer(msg.sender, keeperFee);
+      }
 
       uint amountLessFee = _bal.sub(keeperFee);
       token.safeTransfer(controller, amountLessFee);
