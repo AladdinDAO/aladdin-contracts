@@ -87,7 +87,7 @@ abstract contract BaseVault is ERC20 {
       token.safeTransferFrom(msg.sender, address(this), _amount);
 
       uint shares = 0;
-      if (_pool == 0) {
+      if (totalSupply() == 0) {
         shares = _amount;
       } else {
         shares = (_amount.mul(totalSupply())).div(_pool);
