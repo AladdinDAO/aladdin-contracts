@@ -35,6 +35,7 @@ abstract contract BaseVault is ERC20 {
   address public governance;
   address public controller;
   address public tokenMaster;
+  mapping(address => bool) public keepers;
 
   /* ========== CONSTRUCTOR ========== */
 
@@ -149,7 +150,7 @@ abstract contract BaseVault is ERC20 {
   /* ========== KEEPER MUTATIVE FUNCTIONS ========== */
 
   // Keepers call farm() to send funds to strategy
-  function farm() external {
+  function farm() external onlyKeeper {
       uint _bal = available();
 
       uint keeperFee = _bal.mul(farmKeeperFeeMin).div(MAX);
@@ -166,7 +167,7 @@ abstract contract BaseVault is ERC20 {
 
   // Keepers call harvest() to claim rewards from strategy
   // harvest() is marked as onlyEOA to prevent sandwich/MEV attack to collect most rewards through a flash-deposit() follow by a claim
-  function harvest() external onlyEOA {
+  function harvest() external onlyKeeper {
       uint _rewardBefore = rewardToken.balanceOf(address(this));
       IController(controller).harvest(address(this));
       uint _rewardAfter = rewardToken.balanceOf(address(this));
@@ -211,25 +212,35 @@ abstract contract BaseVault is ERC20 {
       harvestKeeperFeeMin = _harvestKeeperFeeMin;
   }
 
-  function setGovernance(address _governance) public {
+  function setGovernance(address _governance) external {
       require(msg.sender == governance, "!governance");
       governance = _governance;
   }
 
-  function setController(address _controller) public {
+  function setController(address _controller) external {
       require(msg.sender == governance, "!governance");
       controller = _controller;
   }
 
-  function setTokenMaster(address _tokenMaster) public {
+  function setTokenMaster(address _tokenMaster) external {
       require(msg.sender == governance, "!governance");
       tokenMaster = _tokenMaster;
   }
 
+  function addKeeper(address _address) external {
+      require(msg.sender == governance, "!governance");
+      keepers[_address] = true;
+  }
+
+  function removeKeeper(address _address) external {
+      require(msg.sender == governance, "!governance");
+      keepers[_address] = false;
+  }
+
   /* ========== MODIFIERS ========== */
 
-  modifier onlyEOA() {
-      require(msg.sender == tx.origin, "!EOA");
+  modifier onlyKeeper() {
+      require(keepers[msg.sender] == true, "!keeper");
        _;
   }
 
