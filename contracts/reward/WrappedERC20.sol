@@ -15,7 +15,7 @@ contract WrappedERC20 is IWrappedERC20, ERC20 {
         public
         ERC20(name, symbol)
     {
-
+        _setupDecimals(ERC20(_underlying).decimals());
         underlying = IERC20(_underlying);
     }
 
