@@ -49,17 +49,11 @@ contract StrategyCompoundWETH is BaseStrategy {
 
     function balanceOf() public view virtual override returns (uint) {
         return balanceOfWant()
-               .add(balanceOfETH())
                .add(balanceOfCETH());
     }
 
     function balanceOfWant() public view returns (uint) {
         return IERC20(want).balanceOf(address(this));
-    }
-
-    // should always be zero
-    function balanceOfETH() public view returns (uint) {
-        address(this).balance;
     }
 
     function balanceOfCETH() public view returns (uint) {
