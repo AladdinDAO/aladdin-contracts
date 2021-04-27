@@ -87,5 +87,11 @@ contract StrategySushiETHUSDT is BaseStrategy {
         // in case something goes wrong with master chef, allow governance to rescue funds
         require(msg.sender == governance, "!governance");
         MasterChef(masterChef).emergencyWithdraw(pidWant);
+        
+        // sent token back to vault
+        uint _balance = IERC20(want).balanceOf(address(this));
+        address _vault = IController(controller).vaults(address(this));
+        require(_vault != address(0), "!vault"); // additional protection so we don't burn the funds
+        IERC20(want).safeTransfer(_vault, _balance);
     }
 }
