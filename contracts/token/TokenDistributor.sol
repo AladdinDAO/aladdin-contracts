@@ -26,6 +26,10 @@ contract TokenDistributor {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
+    function setGovernance(address _governance) external onlyGov {
+        governance = _governance;
+    }
+
     function allowDistribution(address _token) external onlyGov {
         distributableTokens[_token] = true;
     }

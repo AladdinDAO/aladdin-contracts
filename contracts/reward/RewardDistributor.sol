@@ -29,6 +29,13 @@ contract RewardDistributor {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
+    function setGovernance(address _governance)
+        external
+        onlyGov
+    {
+        governance = _governance;
+    }
+
     function addFundManager(address _address)
         external
         onlyGov

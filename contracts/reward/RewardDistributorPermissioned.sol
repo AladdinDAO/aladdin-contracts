@@ -27,6 +27,10 @@ contract RewardDistributorPermissioned {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
+    function setGovernance(address _governance) external onlyGov {
+        governance = _governance;
+    }
+
     function allowDistribution(address _token) external {
         distributableTokens[_token] = true;
     }
