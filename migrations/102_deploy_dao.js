@@ -1,3 +1,5 @@
+require('dotenv-flow').config();
+
 // ============ Contracts ============
 
 const DAO = artifacts.require('DAO')
@@ -20,6 +22,6 @@ async function deployDAO(deployer, network) {
     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
     "3300000000",
     "10",
-    ["0x9d36e652Ab2C8Fa3738dCC73b3095197988E55B7"] // deployer
+    [process.env.DEPLOYER_ACCOUNT]
   )
 }
