@@ -252,6 +252,8 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     }
 
     function setALDPerBlock(uint256 _aldPerBlock) external onlyOwner {
+        // mass update pools before updating reward rate to avoid changing pending rewards
+        massUpdatePools();
         aldPerBlock = _aldPerBlock;
     }
 
