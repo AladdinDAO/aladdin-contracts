@@ -72,6 +72,16 @@ contract TokenMaster is Ownable, ReentrancyGuard {
 
     /* ========== VIEW FUNCTIONS ========== */
 
+    function userBalanceForPool(address _user, address _poolToken) external view returns (uint256) {
+        uint pid = tokenToPid[_poolToken];
+        if (pid == 0) {
+          // pool does not exist
+          return 0;
+        }
+        UserInfo storage user = userInfo[pid][_user];
+        return user.amount;
+    }
+
     function poolLength() external view returns (uint256) {
         return poolInfo.length;
     }
