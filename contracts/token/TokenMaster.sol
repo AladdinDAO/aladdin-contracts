@@ -266,6 +266,11 @@ contract TokenMaster is Ownable, ReentrancyGuard {
         tokenDistributorAllocNume = _tokenDistributorAllocNume;
     }
 
+    function setStartBlock(uint256 _startBlock) external onlyOwner {
+        require(block.number < startBlock, "Cannot change startBlock after reward start");
+        startBlock = _startBlock;
+    }
+
     /* ========== MODIFIERS ========== */
 
     modifier onlyValidPool(address _token) {
