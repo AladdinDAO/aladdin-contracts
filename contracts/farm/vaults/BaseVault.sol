@@ -7,6 +7,7 @@ import "../../common/SafeMath.sol";
 import "../../common/Address.sol";
 
 import "../../interfaces/IController.sol";
+import "../../interfaces/ITokenMaster.sol";
 
 // Forked from the original yearn yVault (https://github.com/yearn/yearn-protocol/blob/develop/contracts/vaults/yVault.sol) with the following changes:
 // - Introduce reward token of which the user can claim from the underlying strategy
@@ -75,8 +76,14 @@ abstract contract BaseVault is ERC20 {
       return balance().mul(1e18).div(totalSupply());
   }
 
+  // amount staked in token master
+  function stakedBalanceOf(address _user) public view returns(uint) {
+      return ITokenMaster(tokenMaster).userBalanceForPool(_user, address(this));
+  }
+  
   function earned(address account) public view returns (uint) {
-      return balanceOf(account).mul(rewardsPerShareStored.sub(userRewardPerSharePaid[account])).div(1e18).add(rewards[account]);
+      uint256 totalBalance = balanceOf(account).add(stakedBalanceOf(account));
+      return totalBalance.mul(rewardsPerShareStored.sub(userRewardPerSharePaid[account])).div(1e18).add(rewards[account]);
   }
 
   /* ========== USER MUTATIVE FUNCTIONS ========== */
@@ -136,10 +143,10 @@ abstract contract BaseVault is ERC20 {
       claim();
   }
 
-  // Override underlying transfer function to update reward before transfer
+  // Override underlying transfer function to update reward before transfer, except on staking/withdraw to token master
   function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override
   {
-      if (to != tokenMaster) {
+      if (to != tokenMaster && from != tokenMaster) {
           _updateReward(from);
           _updateReward(to);
       }
