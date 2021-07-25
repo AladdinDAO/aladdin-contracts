@@ -107,7 +107,7 @@ abstract contract BaseStrategy {
     // Controller only function for creating additional rewards from dust
     function withdraw(IERC20 _asset) external returns (uint balance) {
         require(msg.sender == controller, "!controller");
-        require(want != address(_asset), "want");
+        require(want != address(_asset) && reward != address(_asset), "cannot withdraw want or reward");
         balance = _asset.balanceOf(address(this));
         _asset.safeTransfer(controller, balance);
     }
