@@ -242,10 +242,8 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     }
 
     // Update the given pool's ALD allocation point. Can only be called by the owner.
-    function set(address _token, uint256 _allocPoint, bool _withUpdate) external onlyOwner onlyValidPool(_token){
-        if (_withUpdate) {
-            massUpdatePools();
-        }
+    function set(address _token, uint256 _allocPoint) external onlyOwner onlyValidPool(_token){
+        massUpdatePools();
         uint pid = tokenToPid[_token];
         totalAllocPoint = totalAllocPoint.sub(poolInfo[pid - 1].allocPoint).add(_allocPoint);
         poolInfo[pid - 1].allocPoint = _allocPoint;
