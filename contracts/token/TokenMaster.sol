@@ -97,7 +97,9 @@ contract TokenMaster is Ownable, ReentrancyGuard {
             uint256 aldReward = aldPerBlock.mul(block.number.sub(pool.lastRewardBlock))
                                              .mul(pool.allocPoint)
                                              .div(totalAllocPoint);
-            accALDPerShare = accALDPerShare.add(aldReward.mul(1e18).div(lpSupply));
+            uint256 distributorReward = aldReward.mul(tokenDistributorAllocNume).div(tokenDistributorAllocDenom);
+            uint256 poolReward = aldReward.sub(distributorReward);
+            accALDPerShare = accALDPerShare.add(poolReward.mul(1e18).div(lpSupply));
         }
         return user.amount.mul(accALDPerShare).div(1e18).sub(user.rewardDebt);
     }
