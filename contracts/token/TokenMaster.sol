@@ -201,14 +201,14 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw(address _token) onlyValidPool(_token) external {
+    function emergencyWithdraw(address _token) onlyValidPool(_token) external nonReentrant {
         uint pid = tokenToPid[_token];
         PoolInfo storage pool = poolInfo[pid - 1];
         UserInfo storage user = userInfo[pid][msg.sender];
-        IERC20(pool.token).safeTransfer(address(msg.sender), user.amount);
-        emit EmergencyWithdraw(msg.sender, _token, user.amount);
         user.amount = 0;
         user.rewardDebt = 0;
+        IERC20(pool.token).safeTransfer(address(msg.sender), user.amount);
+        emit EmergencyWithdraw(msg.sender, _token, user.amount);
     }
 
     // Safe ald transfer function, just in case if rounding error causes pool to not have enough ALDs.

@@ -5,6 +5,7 @@ import "../../common/ERC20.sol";
 import "../../common/SafeERC20.sol";
 import "../../common/SafeMath.sol";
 import "../../common/Address.sol";
+import "../../common/ReentrancyGuard.sol";
 
 import "../../interfaces/IController.sol";
 import "../../interfaces/ITokenMaster.sol";
@@ -14,7 +15,7 @@ import "../../interfaces/ITokenMaster.sol";
 // - Keeper fees for farm and harvest
 // - Overriding transfer function to avoid reward token accumulation in TokenMaster (e.g when user stake Vault token into TokenMaster)
 
-abstract contract BaseVault is ERC20 {
+abstract contract BaseVault is ERC20, ReentrancyGuard {
   using SafeERC20 for IERC20;
   using Address for address;
   using SafeMath for uint256;
@@ -80,7 +81,7 @@ abstract contract BaseVault is ERC20 {
   function stakedBalanceOf(address _user) public view returns(uint) {
       return ITokenMaster(tokenMaster).userBalanceForPool(_user, address(this));
   }
-  
+
   function earned(address account) public view returns (uint) {
       uint256 totalBalance = balanceOf(account).add(stakedBalanceOf(account));
       return totalBalance.mul(rewardsPerShareStored.sub(userRewardPerSharePaid[account])).div(1e18).add(rewards[account]);
@@ -88,7 +89,7 @@ abstract contract BaseVault is ERC20 {
 
   /* ========== USER MUTATIVE FUNCTIONS ========== */
 
-  function deposit(uint _amount) external {
+  function deposit(uint _amount) external nonReentrant {
       _updateReward(msg.sender);
 
       uint _pool = balance();
@@ -105,7 +106,7 @@ abstract contract BaseVault is ERC20 {
   }
 
   // No rebalance implementation for lower fees and faster swaps
-  function withdraw(uint _shares) public {
+  function withdraw(uint _shares) public nonReentrant {
       _updateReward(msg.sender);
 
       uint r = (balance().mul(_shares)).div(totalSupply());
