@@ -6,7 +6,7 @@ import "../common/SafeERC20.sol";
 import "../common/ERC20.sol";
 import "../common/ReentrancyGuard.sol";
 
-// Stake ALD to gain ALDPlus shares
+// Stake ALD to gain ALDPlus status
 contract ALDPlus is ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -16,11 +16,15 @@ contract ALDPlus is ReentrancyGuard {
     address public governance;
 
     IERC20 public ald;
+    uint256 public stakeAmount; // amount of ALD to stake to gain aldplus status
 
+    // only whitelisted address can stake
     mapping(address => bool) public isWhitelisted;
     address[] public whitelist;
 
-    mapping(address => uint) public shares; // Tracking of shares of funders to avoid going over sharesCap
+    // aldplus shares, each address should only have one share
+    mapping(address => uint) public shares; // this technically can be binary, but using uint for balance
+    mapping(address => uint) public balance; // track staked balance used on withdraw
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -35,17 +39,21 @@ contract ALDPlus is ReentrancyGuard {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function deposit(uint _amount) external nonReentrant onlyWhitelist {
-        ald.safeTransferFrom(msg.sender, address(this), _amount);
-        shares[msg.sender] = shares[msg.sender].add(_amount);
-        emit Deposit(msg.sender, _amount);
+    function stake() external nonReentrant onlyWhitelist {
+        require(shares[msg.sender] == 0, "already staked");
+        ald.safeTransferFrom(msg.sender, address(this), stakeAmount);
+        balance[msg.sender] = balance[msg.sender].add(stakeAmount);
+        shares[msg.sender] = 1;
+        emit Stake(msg.sender, stakeAmount);
     }
 
-    function withdraw(uint _amount) external nonReentrant {
-        require(shares[msg.sender] >= _amount, "not enough shares");
-        shares[msg.sender] = shares[msg.sender].sub(_amount);
-        ald.safeTransfer(msg.sender, _amount);
-        emit Withdraw(msg.sender, _amount);
+    function unstake() external nonReentrant {
+        require(shares[msg.sender] != 0, "!staked");
+        uint256 _balance = balance[msg.sender];
+        balance[msg.sender] = 0;
+        shares[msg.sender] = 0;
+        ald.safeTransfer(msg.sender, _balance);
+        emit Unstake(msg.sender, _balance);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
@@ -61,6 +69,13 @@ contract ALDPlus is ReentrancyGuard {
         onlyGov
     {
         governance = _governance;
+    }
+
+    function setStakeAmount(uint256 _stakeAmount)
+        external
+        onlyGov
+    {
+        stakeAmount = _stakeAmount;
     }
 
     function addToWhitelist(address _user)
@@ -110,6 +125,6 @@ contract ALDPlus is ReentrancyGuard {
 
     /* ========== EVENTS ========== */
 
-    event Deposit(address _user, uint256 _amount);
-    event Withdraw(address _user, uint256 _amount);
+    event Stake(address _user, uint256 _amount);
+    event Unstake(address _user, uint256 _amount);
 }
