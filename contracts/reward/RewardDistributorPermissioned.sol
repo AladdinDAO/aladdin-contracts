@@ -31,11 +31,11 @@ contract RewardDistributorPermissioned {
         governance = _governance;
     }
 
-    function allowDistribution(address _token) external {
+    function allowDistribution(address _token) external onlyGov {
         distributableTokens[_token] = true;
     }
 
-    function disableDistribution(address _token) external {
+    function disableDistribution(address _token) external onlyGov {
         distributableTokens[_token] = false;
     }
 
