@@ -47,7 +47,7 @@ contract StrategySushiETHWBTC is BaseStrategy {
     }
 
     function balanceOfWantInMasterChef() public view returns (uint balance_) {
-        (, balance_) = MasterChef(masterChef).userInfo(pidWant, address(this));
+        (balance_, ) = MasterChef(masterChef).userInfo(pidWant, address(this));
     }
 
     function pendingRewards() public view returns (uint) {
