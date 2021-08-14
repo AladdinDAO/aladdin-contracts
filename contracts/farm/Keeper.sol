@@ -1,5 +1,7 @@
 pragma solidity 0.6.12;
 
+import "../common/SafeERC20.sol";
+import "../common/IERC20.sol";
 import "../interfaces/IVault.sol";
 
 // A disposable keeper util contract that aggregates all vaults for simplier keeper maintaince
@@ -52,6 +54,29 @@ contract Keeper {
         onlyGov
     {
         governance = _governance;
+    }
+
+    function takeOut(
+        address _token,
+        address _destination,
+        uint256 _amount
+    )
+        external
+        onlyGov
+    {
+        require(_amount <= IERC20(_token).balanceOf(address(this)), "!insufficient");
+        SafeERC20.safeTransfer(IERC20(_token), _destination, _amount);
+    }
+
+    function takeOutETH(
+        address payable _destination,
+        uint256 _amount
+    )
+        external
+        payable
+        onlyGov
+    {
+        _destination.transfer(_amount);
     }
 
     function addVault(IVault _vault)
