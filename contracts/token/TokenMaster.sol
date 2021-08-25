@@ -41,7 +41,7 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     // Token distributor address
     address public tokenDistributor;
     // token distributor reward allocation = total reward emission * tokenDistributorAllocNume / tokenDistributorAllocDenom
-    uint256 public tokenDistributorAllocNume = 6000;
+    uint256 public tokenDistributorAllocNume = 7070;
     uint256 constant public tokenDistributorAllocDenom = 10000;
     // ALD tokens created per block.
     uint256 public aldPerBlock;
@@ -269,6 +269,12 @@ contract TokenMaster is Ownable, ReentrancyGuard {
     function setStartBlock(uint256 _startBlock) external onlyOwner {
         require(block.number < startBlock, "Cannot change startBlock after reward start");
         startBlock = _startBlock;
+        // reinitialize lastRewardBlock of all existing pools (if any)
+        uint256 length = poolInfo.length;
+        for (uint256 pid = 1; pid <= length; ++pid) {
+            PoolInfo storage pool = poolInfo[pid - 1];
+            pool.lastRewardBlock = _startBlock;
+        }
     }
 
     /* ========== MODIFIERS ========== */
