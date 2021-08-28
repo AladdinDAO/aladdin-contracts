@@ -20,7 +20,7 @@ contract StrategyCompoundWBTC is BaseStrategy {
     /* ========== STATE VARIABLES ========== */
     address constant public WBTC = address(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599); // want
     address constant public COMP = address(0xc00e94Cb662C3520282E6f5717214004A7f26888); // reward
-    address constant public cWBTC = address(0xC11b1268C1A384e55C48c2391d8d480264A3A7F4); // compound cWBTC
+    address constant public cWBTC = address(0xccF4429DB6322D5C611ee964527D42E5d685DD6a); // compound cWBTC
     address constant public comptroller = address(0x3d9819210A31b4961b30EF54bE2aeD79B9c9Cd3B); // compoound Comptroller
 
     /* ========== CONSTRUCTOR ========== */
