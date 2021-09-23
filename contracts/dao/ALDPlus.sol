@@ -19,6 +19,7 @@ contract ALDPlus is ReentrancyGuard {
     uint256 public stakeAmount; // amount of ALD to stake to gain aldplus status
 
     // only whitelisted address can stake
+    bool public enableWhitelist = true;
     mapping(address => bool) public isWhitelisted;
     address[] public whitelist;
 
@@ -109,6 +110,16 @@ contract ALDPlus is ReentrancyGuard {
         require(found == true, "user not found in whitelist");
         whitelist[indexToDelete] = whitelist[whitelist.length - 1];
         whitelist.pop();
+    }
+
+    // Allow governance to rescue stuck tokens
+    function rescue(address _token)
+        external
+        onlyGov
+    {
+        require(_token != address(ald), "!ald");
+        uint _balance = IERC20(_token).balanceOf(address(this));
+        IERC20(_token).safeTransfer(governance, _balance);
     }
 
     /* ========== MODIFIER ========== */
