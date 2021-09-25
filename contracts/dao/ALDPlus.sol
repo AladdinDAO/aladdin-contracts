@@ -129,6 +129,21 @@ contract ALDPlus is ReentrancyGuard {
         whitelist.push(_user);
     }
 
+    function removeFromWhitelist(uint _index)
+        external
+        onlyGov
+    {
+        require(_index < whitelist.length, "out of bound");
+        address _user = whitelist[_index];
+
+        // remove from maping
+        isWhitelisted[_user] = false;
+
+        // remove from list
+        whitelist[_index] = whitelist[whitelist.length - 1];
+        whitelist.pop();
+    }
+    
     function removeFromWhitelist(address _user)
         external
         onlyGov
