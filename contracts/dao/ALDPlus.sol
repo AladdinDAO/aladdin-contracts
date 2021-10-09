@@ -40,10 +40,12 @@ contract ALDPlus is ReentrancyGuard {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        IERC20 _ald
+        IERC20 _ald,
+        uint _stakeAmount
     )
         public
     {
+        stakeAmount = _stakeAmount;
         ald = _ald;
         governance = msg.sender;
     }
@@ -75,7 +77,7 @@ contract ALDPlus is ReentrancyGuard {
     // Withdraw unlocked ALDs
     function withdraw() external nonReentrant {
         require(locks[msg.sender].locked > 0, "!locked");
-        require(locks[msg.sender].unlockTime >= block.timestamp, "!unlocked");
+        require(block.timestamp >= locks[msg.sender].unlockTime, "!unlocked");
         uint256 _locked = locks[msg.sender].locked;
         // unlock
         locks[msg.sender].locked = 0;
@@ -143,7 +145,7 @@ contract ALDPlus is ReentrancyGuard {
         whitelist[_index] = whitelist[whitelist.length - 1];
         whitelist.pop();
     }
-    
+
     function removeFromWhitelist(address _user)
         external
         onlyGov
