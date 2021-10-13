@@ -60,7 +60,7 @@ contract ALDStaker is ERC20("Staked ALD", "xALD"){
         if (totalShares == 0 || totalALD == 0) {
             _mint(msg.sender, _amount);
         }
-        // Calculate and mint the amount of xALD the ALD is worth. The ratio will change overtime, as xALD is burned/minted and ALD deposited + gained from fees / withdrawn.
+        // Calculate and mint the amount of xALD the ALD is worth. The ratio will change overtime, as xALD is burned/minted and ALD deposited + gained from rewards / withdrawn.
         else {
             uint256 what = _amount.mul(totalShares).div(totalALD);
             _mint(msg.sender, what);
