@@ -12,7 +12,7 @@ import "../interfaces/ITokenMaster.sol";
 // Forked from the original SushiBar https://github.com/sushiswap/sushiswap/blob/canary/contracts/SushiBar.sol
 // Changes:
 // 1. Name changes
-// 2. Add hook for TokenMaster claim
+// 2. Add hook for TokenMaster
 
 contract ALDStaker is ERC20("Staked ALD", "xALD"){
     using SafeMath for uint256;
@@ -20,22 +20,29 @@ contract ALDStaker is ERC20("Staked ALD", "xALD"){
     /* ========== STATE VARIABLES ========== */
 
     IERC20 public ald;
-    address public rewardDummy;
+    IERC20 public stakingTokenWrappper;
     ITokenMaster public tokenMaster;
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(IERC20 _ald, ITokenMaster _tokenMaster, address _rewardDummy) public {
+    constructor(
+        IERC20 _ald,
+        ITokenMaster _tokenMaster
+    ) public {
         ald = _ald;
         tokenMaster = _tokenMaster;
-        rewardDummy = _rewardDummy;
+    }
+
+    function init(IERC20 _stakingTokenWrapper) external {
+        require(address(stakingTokenWrappper) == address(0), "already init");
+        stakingTokenWrappper = _stakingTokenWrapper;
     }
 
     /* ========== VIEWS ========== */
 
     // Total ALD = ALD locked + pendingALD
-    function totalALD() external returns (uint) {
-        ald.balanceOf(address(this)).add(tokenMaster.pendingALD(rewardDummy, address(this)));
+    function totalALDBalance() external returns (uint) {
+        ald.balanceOf(address(this)).add(tokenMaster.pendingALD(address(stakingTokenWrappper), address(this)));
     }
 
     /* ========== MUTATIVES ========== */
@@ -60,6 +67,8 @@ contract ALDStaker is ERC20("Staked ALD", "xALD"){
         }
         // Lock the ALD in the contract
         ald.transferFrom(msg.sender, address(this), _amount);
+
+        emit Enter(msg.sender, _amount);
     }
 
     // Withdraw your ALDs.
@@ -73,10 +82,25 @@ contract ALDStaker is ERC20("Staked ALD", "xALD"){
         uint256 what = _share.mul(ald.balanceOf(address(this))).div(totalShares);
         _burn(msg.sender, _share);
         ald.transfer(msg.sender, what);
+
+        emit Leave(msg.sender, what);
     }
 
     // Claim farmed ALDs from TokenMaster
     function harvest() public {
-        tokenMaster.deposit(rewardDummy, 0);
+        tokenMaster.deposit(address(stakingTokenWrappper), 0);
     }
+
+    // Deposit wrapper token into TokenMaster
+    function deposit() external {
+        uint amount = stakingTokenWrappper.balanceOf(address(this));
+        require(amount > 0, "nothing to be deposited");
+        stakingTokenWrappper.approve(address(tokenMaster), amount);
+        tokenMaster.deposit(address(stakingTokenWrappper), amount);
+    }
+
+    /* ========== EVENTS ========== */
+
+    event Enter(address indexed user, uint256 amount);
+    event Leave(address indexed user, uint256 amount);
 }
