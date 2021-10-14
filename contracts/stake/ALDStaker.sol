@@ -8,28 +8,28 @@ import "../common/SafeMath.sol";
 
 import "../interfaces/ITokenMaster.sol";
 
-// Staker for ALD that auto compound farmed yields from TokenMaster
+// Token staker that auto compound farmed yields
 // Forked from the original SushiBar https://github.com/sushiswap/sushiswap/blob/canary/contracts/SushiBar.sol
 // Changes:
 // 1. Name changes
-// 2. Add hook for TokenMaster
+// 2. Add hook for MasterChef like reward source
 
-contract ALDStaker is ERC20("Staked ALD", "xALD"){
+contract ALDStaker is ERC20("Staked ALD", "sALD"){
     using SafeMath for uint256;
 
     /* ========== STATE VARIABLES ========== */
 
-    IERC20 public ald;
+    IERC20 public stakingToken;
     IERC20 public stakingTokenWrappper;
     ITokenMaster public tokenMaster;
 
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        IERC20 _ald,
+        IERC20 _stakingToken,
         ITokenMaster _tokenMaster
     ) public {
-        ald = _ald;
+        stakingToken = _stakingToken;
         tokenMaster = _tokenMaster;
     }
 
@@ -40,53 +40,53 @@ contract ALDStaker is ERC20("Staked ALD", "xALD"){
 
     /* ========== VIEWS ========== */
 
-    // Total ALD = ALD locked + pendingALD
-    function totalALDBalance() external returns (uint) {
-        ald.balanceOf(address(this)).add(tokenMaster.pendingALD(address(stakingTokenWrappper), address(this)));
+    // Total Staked Supply = token staked + reward pending
+    function totalStakedBalance() external returns (uint) {
+        stakingToken.balanceOf(address(this)).add(tokenMaster.pendingALD(address(stakingTokenWrappper), address(this)));
     }
 
     /* ========== MUTATIVES ========== */
 
-    // Pay some ALDs. Earn some shares.
-    // Locks ALD and mints xALD
+    // Stake token and earn shares
+    // Locks staking token and mint shares
     function enter(uint256 _amount) external {
         harvest();
 
-        // Gets the amount of ALD locked in the contract
-        uint256 totalALD = ald.balanceOf(address(this));
-        // Gets the amount of xALD in existence
+        // Gets the amount of staking token locked in the contract
+        uint256 totalAmount = stakingToken.balanceOf(address(this));
+        // Gets the amount of shares in existence
         uint256 totalShares = totalSupply();
-        // If no xALD exists, mint it 1:1 to the amount put in
-        if (totalShares == 0 || totalALD == 0) {
+        // If no shares exists, mint it 1:1 to the amount put in
+        if (totalShares == 0 || totalAmount == 0) {
             _mint(msg.sender, _amount);
         }
-        // Calculate and mint the amount of xALD the ALD is worth. The ratio will change overtime, as xALD is burned/minted and ALD deposited + gained from rewards / withdrawn.
+        // Calculate and mint the amount of shares the staking token is worth. The ratio will change overtime, as share is burned/minted and staking token deposited + gained from rewards / withdrawn.
         else {
-            uint256 what = _amount.mul(totalShares).div(totalALD);
+            uint256 what = _amount.mul(totalShares).div(totalAmount);
             _mint(msg.sender, what);
         }
-        // Lock the ALD in the contract
-        ald.transferFrom(msg.sender, address(this), _amount);
+        // Lock the token in the contract
+        stakingToken.transferFrom(msg.sender, address(this), _amount);
 
         emit Enter(msg.sender, _amount);
     }
 
-    // Withdraw your ALDs.
-    // Unlocks the staked + gained ALD and burns xALD
+    // Withdraw your staked tokens.
+    // Unlocks the staked + gained rewards and burns shares
     function leave(uint256 _share) external {
         harvest();
 
-        // Gets the amount of xALD in existence
+        // Gets the amount of shares in existence
         uint256 totalShares = totalSupply();
-        // Calculates the amount of ALD the xALD is worth
-        uint256 what = _share.mul(ald.balanceOf(address(this))).div(totalShares);
+        // Calculates the amount of staking token the share is worth
+        uint256 what = _share.mul(stakingToken.balanceOf(address(this))).div(totalShares);
         _burn(msg.sender, _share);
-        ald.transfer(msg.sender, what);
+        stakingToken.transfer(msg.sender, what);
 
         emit Leave(msg.sender, what);
     }
 
-    // Claim farmed ALDs from TokenMaster
+    // Claim farmed rewards
     function harvest() public {
         tokenMaster.deposit(address(stakingTokenWrappper), 0);
     }
