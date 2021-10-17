@@ -41,8 +41,9 @@ contract ALDStaker is ERC20("Staked ALD", "sALD"){
     /* ========== VIEWS ========== */
 
     // Total Staked Supply = token staked + reward pending
-    function totalStakedBalance() external returns (uint) {
-        stakingToken.balanceOf(address(this)).add(tokenMaster.pendingALD(address(stakingTokenWrappper), address(this)));
+    function totalStakedBalance() external view returns (uint) {
+        return stakingToken.balanceOf(address(this))
+                           .add(tokenMaster.pendingALD(address(stakingTokenWrappper), address(this)));
     }
 
     /* ========== MUTATIVES ========== */
