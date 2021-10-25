@@ -32,7 +32,6 @@ module.exports = {
       ),
       gasPrice: Number(process.env.GAS_PRICE),
       gas: 8000000,
-      from: process.env.DEPLOYER_ACCOUNT,
       timeoutBlocks: 8000,
     },
     kovan: {
@@ -45,7 +44,6 @@ module.exports = {
       ),
       gasPrice: 1000000000, // 1 gwei
       gas: 8000000,
-      from: process.env.DEPLOYER_ACCOUNT,
       timeoutBlocks: 500,
       networkCheckTimeout: 1000000,
     },
@@ -53,13 +51,12 @@ module.exports = {
       network_id: '31337',
       provider: () => new HDWalletProvider(
         [process.env.DEPLOYER_PRIVATE_KEY],
-        "http://47.52.160.9:8545",
+        "http://47.244.201.190:8545",
         0,
         1,
       ),
-      gasPrice: 1,
+      gasPrice: 533042975,
       gas: 6721975,
-      from: process.env.DEPLOYER_ACCOUNT,
       timeoutBlocks: 500,
       networkCheckTimeout: 1000000,
     }
