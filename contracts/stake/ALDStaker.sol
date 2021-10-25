@@ -19,7 +19,7 @@ contract ALDStaker is ERC20("Staked ALD", "sALD"){
 
     /* ========== STATE VARIABLES ========== */
 
-    IERC20 public stakingToken;
+    IERC20 immutable public stakingToken;
     IERC20 public stakingTokenWrappper;
     ITokenMaster public tokenMaster;
 
