@@ -44,6 +44,12 @@ contract ALDStaker is ERC20("Staked ALD", "sALD"){
     function init(IERC20 _stakingTokenWrapper) external {
         require(address(stakingTokenWrappper) == address(0), "already init");
         stakingTokenWrappper = _stakingTokenWrapper;
+
+        // Deposit wrapper token into TokenMaster
+        uint amount = stakingTokenWrappper.balanceOf(address(this));
+        require(amount > 0, "nothing to be deposited");
+        stakingTokenWrappper.approve(address(tokenMaster), amount);
+        tokenMaster.deposit(address(stakingTokenWrappper), amount);
     }
 
     /* ========== VIEWS ========== */
@@ -104,14 +110,6 @@ contract ALDStaker is ERC20("Staked ALD", "sALD"){
     // Claim farmed rewards
     function harvest() public {
         tokenMaster.deposit(address(stakingTokenWrappper), 0);
-    }
-
-    // Deposit wrapper token into TokenMaster
-    function deposit() external {
-        uint amount = stakingTokenWrappper.balanceOf(address(this));
-        require(amount > 0, "nothing to be deposited");
-        stakingTokenWrappper.approve(address(tokenMaster), amount);
-        tokenMaster.deposit(address(stakingTokenWrappper), amount);
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
