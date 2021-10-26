@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.6.12;
 
 import "../../common/IERC20.sol";
@@ -8,6 +10,7 @@ import "../../common/Address.sol";
 import "../../common/ReentrancyGuard.sol";
 
 import "../../interfaces/ITokenMaster.sol";
+import "../../interfaces/IWETH.sol";
 
 abstract contract BaseVaultV2 is ERC20, ReentrancyGuard {
   using SafeERC20 for IERC20;
@@ -17,6 +20,8 @@ abstract contract BaseVaultV2 is ERC20, ReentrancyGuard {
   /* ========== STATE VARIABLES ========== */
 
   // Addresses
+  address private immutable WETH;
+
   IERC20 public token;
   IERC20 public rewardToken;
   address public governance;
@@ -35,6 +40,7 @@ abstract contract BaseVaultV2 is ERC20, ReentrancyGuard {
   /* ========== CONSTRUCTOR ========== */
 
   constructor (
+      address _weth,
       address _token,
       address _rewardToken,
       address _treasury,
@@ -46,6 +52,7 @@ abstract contract BaseVaultV2 is ERC20, ReentrancyGuard {
       )
   ) {
       _setupDecimals(ERC20(_token).decimals());
+      WETH = _weth;
       token = IERC20(_token);
       rewardToken = IERC20(_rewardToken);
       treasury = _treasury;
@@ -79,17 +86,26 @@ abstract contract BaseVaultV2 is ERC20, ReentrancyGuard {
 
   /* ========== USER MUTATIVE FUNCTIONS ========== */
 
-  function deposit(uint _amount) external nonReentrant {
+  function deposit(uint _amount) payable external nonReentrant {
       _updateReward(msg.sender);
 
       uint _pool = balance();
-      token.safeTransferFrom(msg.sender, address(this), _amount);
+
+      // special deal with WETH
+      if (msg.value > 0) {
+        require(msg.value == _amount, "msg.value mismatch _amount");
+        require(address(token) == WETH, "asset is not WETH");
+        IWETH(WETH).deposit{value: msg.value}();
+      } else {
+        token.safeTransferFrom(msg.sender, address(this), _amount);
+      }
 
       uint shares = 0;
-      if (totalSupply() == 0) {
+      uint _totalSupply = totalSupply();
+      if (_totalSupply == 0) {
         shares = _amount;
       } else {
-        shares = (_amount.mul(totalSupply())).div(_pool);
+        shares = (_amount.mul(_totalSupply)).div(_pool);
       }
 
       // Mint vault share
@@ -106,20 +122,27 @@ abstract contract BaseVaultV2 is ERC20, ReentrancyGuard {
       uint r = (balance().mul(_shares)).div(totalSupply());
       _burn(msg.sender, _shares);
 
+      IERC20 _token = token; // gas saving
       // Check balance
-      uint b = token.balanceOf(address(this));
+      uint b = _token.balanceOf(address(this));
       if (b < r) {
           uint _withdrawAmount = r.sub(b);
           // Withdraw from strategy
           _withdraw(_withdrawAmount);
-          uint _after = token.balanceOf(address(this));
+          uint _after = _token.balanceOf(address(this));
           uint _diff = _after.sub(b);
           if (_diff < _withdrawAmount) {
               r = b.add(_diff);
           }
       }
-
-      token.safeTransfer(msg.sender, r);
+      
+      // special deal with WETH
+      if (address(_token) == WETH) {
+        IWETH(address(_token)).withdraw(r);
+        Address.sendValue(msg.sender, r);
+      } else {
+        _token.safeTransfer(msg.sender, r);
+      }
       emit Withdraw(msg.sender, r);
   }
 
@@ -210,6 +233,9 @@ abstract contract BaseVaultV2 is ERC20, ReentrancyGuard {
       require(_performanceFeeMin <= MAX, "over MAX");
       performanceFeeMin = _performanceFeeMin;
   }
+
+  // to receive from WETH
+  receive() external payable {}
 
   /* ========== EVENTS ========== */
 
