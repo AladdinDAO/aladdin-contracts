@@ -7,30 +7,38 @@ import "../common/ERC20.sol";
 import "../common/SafeMath.sol";
 
 import "../interfaces/ITokenMaster.sol";
+import "../interfaces/ITokenLocker.sol";
 
 // Token staker that auto compound farmed yields
 // Forked from the original SushiBar https://github.com/sushiswap/sushiswap/blob/canary/contracts/SushiBar.sol
 // Changes:
 // 1. Name changes
 // 2. Add hook for MasterChef like reward source
+// 3. Add option for locking token on withdraw
 
 contract ALDStaker is ERC20("Staked ALD", "sALD"){
     using SafeMath for uint256;
 
     /* ========== STATE VARIABLES ========== */
 
+    address public governance;
     IERC20 immutable public stakingToken;
     IERC20 public stakingTokenWrappper;
     ITokenMaster public tokenMaster;
+    ITokenLocker public tokenLocker;
+    bool public lockWithdraw = true;
 
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
         IERC20 _stakingToken,
-        ITokenMaster _tokenMaster
+        ITokenMaster _tokenMaster,
+        ITokenLocker _tokenLocker
     ) public {
         stakingToken = _stakingToken;
         tokenMaster = _tokenMaster;
+        tokenLocker = _tokenLocker;
+        governance = msg.sender;
     }
 
     function init(IERC20 _stakingTokenWrapper) external {
@@ -82,7 +90,13 @@ contract ALDStaker is ERC20("Staked ALD", "sALD"){
         // Calculates the amount of staking token the share is worth
         uint256 what = _share.mul(stakingToken.balanceOf(address(this))).div(totalShares);
         _burn(msg.sender, _share);
-        stakingToken.transfer(msg.sender, what);
+
+        if (lockWithdraw) {
+            stakingToken.approve(address(tokenLocker), what);
+            tokenLocker.lock(what, msg.sender);
+        } else {
+            stakingToken.transfer(msg.sender, what);
+        }
 
         emit Leave(msg.sender, what);
     }
@@ -98,6 +112,43 @@ contract ALDStaker is ERC20("Staked ALD", "sALD"){
         require(amount > 0, "nothing to be deposited");
         stakingTokenWrappper.approve(address(tokenMaster), amount);
         tokenMaster.deposit(address(stakingTokenWrappper), amount);
+    }
+
+    /* ========== RESTRICTED FUNCTIONS ========== */
+
+    function setGov(address _governance)
+        external
+        onlyGov
+    {
+        governance = _governance;
+    }
+
+    function setTokenLocker(ITokenLocker _tokenLocker)
+        external
+        onlyGov
+    {
+        tokenLocker = _tokenLocker;
+    }
+
+    function enableLockOnWithdraw()
+        external
+        onlyGov
+    {
+        lockWithdraw = true;
+    }
+
+    function disableLockOnWithdraw()
+        external
+        onlyGov
+    {
+        lockWithdraw = false;
+    }
+
+    /* ========== MODIFIER ========== */
+
+    modifier onlyGov() {
+        require(msg.sender == governance, "!gov");
+        _;
     }
 
     /* ========== EVENTS ========== */
