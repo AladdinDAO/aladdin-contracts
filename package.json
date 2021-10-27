@@ -7,7 +7,9 @@
     "lib": "lib"
   },
   "scripts": {
-    "build": "waffle",
+    "clean": "rm -rf build/",
+    "precompile": "npm run clean",
+    "compile": "truffle compile",
     "test": "export NODE_ENV=test && mocha"
   },
   "dependencies": {
