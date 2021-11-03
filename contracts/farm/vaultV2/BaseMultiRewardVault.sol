@@ -19,7 +19,7 @@ abstract contract BaseMultiRewardVault is ERC20, ReentrancyGuard {
   /* ========== STATE VARIABLES ========== */
 
   // Addresses
-  IERC20 public token;
+  IERC20 public baseToken;
   address public governance;
   address public tokenMaster;
   address public treasury;
@@ -35,18 +35,18 @@ abstract contract BaseMultiRewardVault is ERC20, ReentrancyGuard {
   /* ========== CONSTRUCTOR ========== */
 
   constructor(
-    address _token,
+    address _baseToken,
     address _treasury,
     address _tokenMaster
   )
     public
     ERC20(
-      string(abi.encodePacked("aladdin ", ERC20(_token).name())),
-      string(abi.encodePacked("ald", ERC20(_token).symbol()))
+      string(abi.encodePacked("aladdin ", ERC20(_baseToken).name())),
+      string(abi.encodePacked("ald", ERC20(_baseToken).symbol()))
     )
   {
-    _setupDecimals(ERC20(_token).decimals());
-    token = IERC20(_token);
+    _setupDecimals(ERC20(_baseToken).decimals());
+    baseToken = IERC20(_baseToken);
     treasury = _treasury;
     tokenMaster = _tokenMaster;
     governance = msg.sender;
@@ -63,7 +63,7 @@ abstract contract BaseMultiRewardVault is ERC20, ReentrancyGuard {
 
   // Balance of deposit token owned by vault
   function balance() public view returns (uint256) {
-    return token.balanceOf(address(this)).add(_balanceOf());
+    return baseToken.balanceOf(address(this)).add(_balanceOf());
   }
 
   // Amount of deposit token per vault share
@@ -95,7 +95,7 @@ abstract contract BaseMultiRewardVault is ERC20, ReentrancyGuard {
     _updateReward(msg.sender);
 
     uint256 _pool = balance();
-    token.safeTransferFrom(msg.sender, address(this), _amount);
+    baseToken.safeTransferFrom(msg.sender, address(this), _amount);
 
     uint256 shares = 0;
     if (totalSupply() == 0) {
@@ -119,34 +119,25 @@ abstract contract BaseMultiRewardVault is ERC20, ReentrancyGuard {
     _burn(msg.sender, _shares);
 
     // Check balance
-    uint256 b = token.balanceOf(address(this));
+    IERC20 _baseToken = baseToken; // gas saving
+    uint256 b = _baseToken.balanceOf(address(this));
     if (b < r) {
       uint256 _withdrawAmount = r.sub(b);
       // Withdraw from strategy
       _withdraw(_withdrawAmount);
-      uint256 _after = token.balanceOf(address(this));
+      uint256 _after = _baseToken.balanceOf(address(this));
       uint256 _diff = _after.sub(b);
       if (_diff < _withdrawAmount) {
         r = b.add(_diff);
       }
     }
 
-    token.safeTransfer(msg.sender, r);
+    _baseToken.safeTransfer(msg.sender, r);
     emit Withdraw(msg.sender, r);
   }
 
   function claim() public {
-    _updateReward(msg.sender);
-
-    // need to discuss
-    /*
-    uint256 reward = rewards[msg.sender];
-    if (reward > 0) {
-      rewards[msg.sender] = 0;
-      rewardToken.safeTransfer(msg.sender, reward);
-    }
-    emit Claim(msg.sender, reward);
-    */
+    revert("not supported yet");
   }
 
   function exit() external {
@@ -177,7 +168,10 @@ abstract contract BaseMultiRewardVault is ERC20, ReentrancyGuard {
       _rewardTokens[i].safeTransfer(treasury, harvested);
 
       // distribute new rewards to current shares evenly
-      rewardsPerShareStored[i] = rewardsPerShareStored[i].add(harvested.mul(1e18).div(_totalSupply));
+      if (_totalSupply != 0) {
+        // in case that the pool is retired and some rewards still can be claimed.
+        rewardsPerShareStored[i] = rewardsPerShareStored[i].add(harvested.mul(1e18).div(_totalSupply));
+      }
 
       emit Harvest(msg.sender, address(_rewardTokens[i]), harvested);
     }
@@ -245,7 +239,7 @@ abstract contract BaseMultiRewardVault is ERC20, ReentrancyGuard {
     require(msg.sender == governance, "!governance");
 
     // Not allowed withdraw vault tokens.
-    if (_token == token) return;
+    if (_token == baseToken) return;
     uint256 totalRewardTokens = rewardTokens.length;
     for (uint256 i = 0; i < totalRewardTokens; i++) {
       if (rewardTokens[i] == _token) return;

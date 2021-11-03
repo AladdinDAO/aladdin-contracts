@@ -19,7 +19,7 @@ contract MIMConvexVault is BaseConvexVault {
     address[] memory _rewardTokens = new address[](3);
     _rewardTokens[0] = address(0xD533a949740bb3306d119CC777fa900bA034cd52); // CRV
     _rewardTokens[1] = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B); // CVX
-    _rewardTokens[2] = address(0x69a92f1656cd2e193797546cFe2EaF32EACcf6f7); // SPELL
+    _rewardTokens[2] = address(0x090185f2135308BaD17527004364eBcC2D37e5F6); // SPELL
 
     _setupRewardTokens(_rewardTokens);
   }

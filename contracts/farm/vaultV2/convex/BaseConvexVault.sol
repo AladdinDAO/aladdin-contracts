@@ -43,18 +43,18 @@ interface IBaseRewardPool {
 abstract contract BaseConvexVault is BaseMultiRewardVault {
   IBooster public booster;
   IBaseRewardPool public cvxRewardPool;
-  
+
   uint256 public pid;
 
   constructor(
-    address _token,
+    address _baseToken,
     address _treasury,
     address _tokenMaster,
     address _booster,
     uint256 _pid
-  ) public BaseMultiRewardVault(_token, _treasury, _tokenMaster) {
+  ) public BaseMultiRewardVault(_baseToken, _treasury, _tokenMaster) {
     IBooster.PoolInfo memory info = IBooster(_booster).poolInfo(_pid);
-    require(info.lptoken == _token, "invalid pid or token");
+    require(info.lptoken == _baseToken, "invalid pid or token");
 
     booster = IBooster(_booster);
     cvxRewardPool = IBaseRewardPool(info.crvRewards);
@@ -63,11 +63,11 @@ abstract contract BaseConvexVault is BaseMultiRewardVault {
 
   // Deposit token into strategy. Deposits entire vault balance
   function _deposit() internal override {
-    IERC20 _token = token;
-    uint256 amount = _token.balanceOf(address(this));
+    IERC20 _baseToken = baseToken;
+    uint256 amount = _baseToken.balanceOf(address(this));
     if (amount > 0) {
       IBooster _booster = booster;
-      _token.safeApprove(address(_booster), amount);
+      _baseToken.safeApprove(address(_booster), amount);
       _booster.deposit(pid, amount, true);
     }
   }
@@ -85,6 +85,6 @@ abstract contract BaseConvexVault is BaseMultiRewardVault {
   // Balance of deposit token in underlying strategy
   function _balanceOf() internal view override returns (uint256) {
     // The cvxStakeToken is 1:1 with lpToken
-    return cvxRewardPool.balanceOf(msg.sender);
+    return cvxRewardPool.balanceOf(address(this));
   }
 }

@@ -19,7 +19,7 @@ contract STETHConvexVault is BaseConvexVault {
     address[] memory _rewardTokens = new address[](3);
     _rewardTokens[0] = address(0xD533a949740bb3306d119CC777fa900bA034cd52); // CRV
     _rewardTokens[1] = address(0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B); // CVX
-    _rewardTokens[2] = address(0x008aEa5036b819B4FEAEd10b2190FBb3954981E8); // LDO
+    _rewardTokens[2] = address(0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32); // LDO
 
     _setupRewardTokens(_rewardTokens);
   }
