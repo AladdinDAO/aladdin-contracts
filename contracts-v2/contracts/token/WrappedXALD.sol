@@ -4,9 +4,10 @@ pragma solidity ^0.7.6;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import "../interfaces/IWXALD.sol";
 import "../interfaces/IXALD.sol";
 
-contract WrappedXALD is ERC20 {
+contract WrappedXALD is ERC20, IWXALD {
   IXALD public xALD;
 
   /**
@@ -21,7 +22,7 @@ contract WrappedXALD is ERC20 {
    * @param _xALDAmount amount of xALD to wrap in exchange for wxALD
    * @return Amount of wxALD user receives after wrap
    */
-  function wrap(uint256 _xALDAmount) external returns (uint256) {
+  function wrap(uint256 _xALDAmount) external override returns (uint256) {
     require(_xALDAmount > 0, "wxALD: can't wrap zero xALD");
     xALD.transferFrom(msg.sender, address(this), _xALDAmount);
     uint256 wxALDAmount = xALD.getSharesByALD(_xALDAmount);
@@ -34,7 +35,7 @@ contract WrappedXALD is ERC20 {
    * @param _wxALDAmount amount of wxALD to uwrap in exchange for xALD
    * @return Amount of xALD user receives after unwrap
    */
-  function unwrap(uint256 _wxALDAmount) external returns (uint256) {
+  function unwrap(uint256 _wxALDAmount) external override returns (uint256) {
     require(_wxALDAmount > 0, "wxALD: zero amount unwrap not allowed");
     _burn(msg.sender, _wxALDAmount);
     uint256 xALDAmount = xALD.getALDByShares(_wxALDAmount);
