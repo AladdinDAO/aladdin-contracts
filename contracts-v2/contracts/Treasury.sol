@@ -146,7 +146,7 @@ contract Treasury is Ownable, ITreasury {
 
     if (_type != ReserveType.NULL) {
       // a portion of token should used as POL
-    uint256 _percentagePOL = percentagePOL[_token];
+      uint256 _percentagePOL = percentagePOL[_token];
       if (_percentagePOL > 0) {
         polReserves[_token] = polReserves[_token].add(_amount.mul(_percentagePOL).div(PRECISION));
       }

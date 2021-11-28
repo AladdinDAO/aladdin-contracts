@@ -5,6 +5,13 @@
   "repository": "git@github.com:AladdinDAO/aladdin-contracts.git",
   "author": "AladdinDAO",
   "license": "MIT",
+  "scripts": {
+    "test": "npx hardhat test",
+    "solhint": "./node_modules/.bin/solhint -f table 'contracts/**/*.sol'",
+    "prettier:solidity": "./node_modules/.bin/prettier --write 'contracts/**/*.sol'",
+    "prettier": "./node_modules/.bin/prettier --write 'test/**/*.ts' 'tasks/**/*.ts' 'scripts/**/*.ts' *.ts",
+    "coverage": "hardhat coverage"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-etherscan": "^2.1.3",

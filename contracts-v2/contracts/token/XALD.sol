@@ -163,7 +163,10 @@ contract XALD is IXALD {
     _burnShares(_account, _sharesAmount);
   }
 
-  function rebase(uint256 epoch, uint256 profit) external override {
+  function rebase(
+    uint256, /*epoch*/
+    uint256 profit
+  ) external override {
     _totalSupply = _totalSupply.add(profit);
 
     // TODO: add events, record rebase info.

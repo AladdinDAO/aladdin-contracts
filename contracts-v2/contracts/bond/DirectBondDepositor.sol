@@ -13,30 +13,44 @@ import "../interfaces/ITreasury.sol";
 
 // TODO: add events
 
-contract AssetBondDepositor is Ownable, ReentrancyGuard {
+contract DirectBondDepositor is Ownable, ReentrancyGuard {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
+
+  // The address of ald.
+  address public immutable ald;
 
   // The address of Treasury.
   address public immutable treasury;
 
   // The address of Staking.
-  address public immutable staking;
+  address public staking;
 
   // Record whether an asset can be used to bond ALD.
   mapping(address => bool) isBondAsset;
   // Record whether an asset is liquidity token.
   mapping(address => bool) isLiquidityToken;
 
-  constructor(
-    address _ald,
-    address _treasury,
-    address _staking
-  ) {
+  address private _initializer;
+
+  constructor(address _ald, address _treasury) {
+    require(_ald != address(0), "DirectBondDepositor: not zero address");
+    require(_treasury != address(0), "DirectBondDepositor: not zero address");
+
+    ald = _ald;
     treasury = _treasury;
+
+    _initializer = msg.sender;
+  }
+
+  function initialize(address _staking) external {
+    require(_initializer == msg.sender, "DirectBondDepositor: only initializer");
+    require(_staking != address(0), "DirectBondDepositor: not zero address");
+
+    IERC20(ald).safeApprove(_staking, uint256(-1));
     staking = _staking;
 
-    IERC20(_ald).safeApprove(_staking, uint256(-1));
+    _initializer = address(0);
   }
 
   /********************************** View Functions **********************************/
@@ -51,7 +65,7 @@ contract AssetBondDepositor is Ownable, ReentrancyGuard {
   /********************************** Mutated Functions **********************************/
 
   function deposit(address _token, uint256 _amount) external nonReentrant {
-    require(isBondAsset[_token], "AssetBondDepositor: not approved");
+    require(isBondAsset[_token], "DirectBondDepositor: not approved");
 
     IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
 

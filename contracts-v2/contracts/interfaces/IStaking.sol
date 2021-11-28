@@ -3,7 +3,6 @@
 pragma solidity ^0.7.6;
 
 interface IStaking {
-
   function stake(uint256 _amount) external;
 
   function stakeFor(address _recipient, uint256 _amount) external;
@@ -14,7 +13,9 @@ interface IStaking {
 
   function bondFor(address _recipient, uint256 _amount) external;
 
-  function rewardBond(uint256 _epoch, address[] memory _tokens, uint256[] memory _amounts) external;
+  function rewardBond(address _vault, uint256 _amount) external;
+
+  function rebase() external;
 
   function redeem(address _recipient, bool _withdraw) external;
 }

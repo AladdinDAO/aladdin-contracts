@@ -57,7 +57,7 @@ contract WrappedXALD is ERC20, IWXALD {
    * @param _wxALDAmount amount of wxALD
    * @return Amount of xALD for a given wxALD amount
    */
-  function wrappedXALDToXALD(uint256 _wxALDAmount) external view returns (uint256) {
+  function wrappedXALDToXALD(uint256 _wxALDAmount) external view override returns (uint256) {
     return xALD.getALDByShares(_wxALDAmount);
   }
 
