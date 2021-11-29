@@ -18,6 +18,12 @@ contract Staking is Ownable, IStaking {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
+  event Bond(address indexed recipient, uint256 aldAmount, uint256 wxALDAmount);
+  event RewardBond(address indexed vault, uint256 aldAmount, uint256 wxALDAmount);
+  event Stake(address indexed caller, address indexed recipient, uint256 amount);
+  event Unstake(address indexed caller, address indexed recipient, uint256 amount);
+  event Redeem(address indexed caller, address indexed recipient, uint256 amount);
+
   struct UserLockedBalance {
     // The amount of wxALD locked.
     uint192 amount;
@@ -88,6 +94,11 @@ contract Staking is Ownable, IStaking {
     _;
   }
 
+  /// @param _ALD The address of ALD token.
+  /// @param _xALD The address of xALD token.
+  /// @param _wxALD The address of wxALD token.
+  /// @param _directBondDepositor The address of direct bond contract.
+  /// @param _rewardBondDepositor The address of reward bond contract.
   constructor(
     address _ALD,
     address _xALD,
@@ -95,6 +106,12 @@ contract Staking is Ownable, IStaking {
     address _directBondDepositor,
     address _rewardBondDepositor
   ) {
+    require(_ALD != address(0), "Treasury: zero address");
+    require(_xALD != address(0), "Treasury: zero address");
+    require(_wxALD != address(0), "Treasury: zero address");
+    require(_directBondDepositor != address(0), "Treasury: zero address");
+    require(_rewardBondDepositor != address(0), "Treasury: zero address");
+
     ALD = _ALD;
     xALD = _xALD;
     wxALD = _wxALD;
@@ -113,7 +130,9 @@ contract Staking is Ownable, IStaking {
 
   /********************************** View Functions **********************************/
 
-  function pendingALD(address _user) external view returns (uint256) {
+  /// @dev return the pending xALD amount including locked and unlocked.
+  /// @param _user The address of user.
+  function pendingXALD(address _user) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
     uint256 _lastEpoch = checkpoint[_user].epochNumber;
@@ -129,7 +148,9 @@ contract Staking is Ownable, IStaking {
     return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
   }
 
-  function unlockedALD(address _user) external view returns (uint256) {
+  /// @dev return the unlocked xALD amount.
+  /// @param _user The address of user.
+  function unlockedXALD(address _user) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
     uint256 _lastEpoch = checkpoint[_user].epochNumber;
@@ -147,6 +168,7 @@ contract Staking is Ownable, IStaking {
 
   /********************************** Mutated Functions **********************************/
 
+  /// @dev stake all ALD for xALD.
   function stakeAll() external notPaused {
     if (enableWhitelist) {
       require(isWhitelist[msg.sender], "Staking: not whitelist");
@@ -157,6 +179,8 @@ contract Staking is Ownable, IStaking {
     _stakeFor(msg.sender, _amount);
   }
 
+  /// @dev stake ALD for xALD.
+  /// @param _amount The amount of ALD to stake.
   function stake(uint256 _amount) external override notPaused {
     if (enableWhitelist) {
       require(isWhitelist[msg.sender], "Staking: not whitelist");
@@ -166,6 +190,9 @@ contract Staking is Ownable, IStaking {
     _stakeFor(msg.sender, _amount);
   }
 
+  /// @dev stake ALD for others.
+  /// @param _recipient The address to receipt xALD.
+  /// @param _amount The amount of ALD to stake.
   function stakeFor(address _recipient, uint256 _amount) external override notPaused {
     if (enableWhitelist) {
       require(isWhitelist[msg.sender], "Staking: not whitelist");
@@ -175,19 +202,27 @@ contract Staking is Ownable, IStaking {
     _stakeFor(_recipient, _amount);
   }
 
+  /// @dev unstake xALD to ALD.
+  /// @param _recipient The address to receipt ALD.
+  /// @param _amount The amount of xALD to unstake.
   function unstake(address _recipient, uint256 _amount) external override notPaused {
     _unstake(_recipient, _amount);
   }
 
+  /// @dev unstake all xALD to ALD.
+  /// @param _recipient The address to receipt ALD.
   function unstakeAll(address _recipient) external override notPaused {
     uint256 _amount = IXALD(xALD).balanceOf(msg.sender);
     _unstake(_recipient, _amount);
   }
 
-  /// @dev all bond on the same epoch are grouped at the expected start block of next epoch.
+  /// @dev bond ALD from direct asset. only called by DirectBondDepositor contract.
+  /// @notice all bond on the same epoch are grouped at the expected start block of next epoch.
+  /// @param _recipient The address to receipt xALD.
+  /// @param _amount The amount of ALD to stake.
   function bondFor(address _recipient, uint256 _amount) external override notPaused {
     require(directBondDepositor == msg.sender, "Staking: not approved");
-    _amount = _transferAndWrap(msg.sender, _amount);
+    uint256 _wxALDAmount = _transferAndWrap(msg.sender, _amount);
 
     // bond lock logic
     (, , uint256 nextBlock, uint256 epochLength) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
@@ -197,24 +232,26 @@ contract Staking is Ownable, IStaking {
     if (length == 0 || _locks[length - 1].lockedBlock != nextBlock) {
       _locks.push(
         UserLockedBalance({
-          amount: uint192(_amount),
+          amount: uint192(_wxALDAmount),
           lockedBlock: uint32(nextBlock),
           unlockBlock: uint32(nextBlock + epochLength * bondLockingPeriod)
         })
       );
     } else {
-      _locks[length - 1].amount = uint192(uint256(_locks[length - 1].amount).add(_amount));
+      _locks[length - 1].amount = uint192(uint256(_locks[length - 1].amount).add(_wxALDAmount));
     }
 
-    // TODO: event
+    emit Bond(_recipient, _amount, _wxALDAmount);
   }
 
-  /// @dev all bond on the same epoch are grouped at the expected start block of next epoch.
+  /// @dev bond ALD from vault reward. only called by RewardBondDepositor contract.
+  /// @notice all bond on the same epoch are grouped at the expected start block of next epoch.
+  /// @param _vault The address of vault.
+  /// @param _amount The amount of ALD to stake.
   function rewardBond(address _vault, uint256 _amount) external override notPaused {
     require(rewardBondDepositor == msg.sender, "Staking: not approved");
-    _amount = _transferAndWrap(msg.sender, _amount);
+    uint256 _wxALDAmount = _transferAndWrap(msg.sender, _amount);
 
-    // TODO: reward bond lock logic
     (uint256 epochNumber, , uint256 nextBlock, uint256 epochLength) = IRewardBondDepositor(rewardBondDepositor)
       .currentEpoch();
     RewardBondBalance storage _lock = rewardBondLocks[epochNumber];
@@ -224,12 +261,13 @@ contract Staking is Ownable, IStaking {
       _lock.lockedBlock = uint32(nextBlock);
       _lock.unlockBlock = uint32(nextBlock + epochLength * bondLockingPeriod);
     }
-    _lock.amounts[_vault] = _lock.amounts[_vault].add(_amount);
+    _lock.amounts[_vault] = _lock.amounts[_vault].add(_wxALDAmount);
 
-    // TODO: event
+    emit RewardBond(_vault, _amount, _wxALDAmount);
   }
 
-  /// @dev assume it is called in `rebase()` from contract `rewardBondDepositor`.
+  /// @dev mint ALD reward for stakers.
+  /// @notice assume it is called in `rebase()` from contract `rewardBondDepositor`.
   function rebase() external override notPaused {
     require(rewardBondDepositor == msg.sender, "Staking: not approved");
 
@@ -243,7 +281,10 @@ contract Staking is Ownable, IStaking {
     }
   }
 
-  function redeem(address _recipient, bool _withdraw) external override notPaused {
+  /// @dev redeem unlocked xALD from contract.
+  /// @param _recipient The address to receive xALD/ALD.
+  /// @param __unstake Whether to unstake xALD to ALD.
+  function redeem(address _recipient, bool __unstake) external override notPaused {
     // be carefull when no checkpoint for msg.sender
     uint256 _lastBlock = checkpoint[msg.sender].blockNumber;
     uint256 _lastEpoch = checkpoint[msg.sender].epochNumber;
@@ -261,50 +302,45 @@ contract Staking is Ownable, IStaking {
     // find the unlocked xALD amount
     unlockedAmount = IWXALD(wxALD).unwrap(unlockedAmount);
 
-    if (_withdraw) {
+    emit Redeem(msg.sender, _recipient, unlockedAmount);
+
+    if (__unstake) {
       IXALD(xALD).unstake(address(this), unlockedAmount);
       IERC20(ALD).safeTransfer(_recipient, unlockedAmount);
+      emit Unstake(msg.sender, _recipient, unlockedAmount);
     } else {
       IERC20(xALD).safeTransfer(_recipient, unlockedAmount);
     }
 
     checkpoint[msg.sender] = Checkpoint({ blockNumber: uint128(block.number), epochNumber: uint128(epochNumber) });
-
-    // TODO: event
   }
 
   /********************************** Restricted Functions **********************************/
 
   function updateDistributor(address _distributor) external onlyOwner {
     distributor = _distributor;
-    // TODO: event
   }
 
   function updatePaused(bool _paused) external onlyOwner {
     paused = _paused;
-    // TODO: event
   }
 
   function updateEnableWhitelist(bool _enableWhitelist) external onlyOwner {
     enableWhitelist = _enableWhitelist;
-    // TODO: event
   }
 
   function updateWhitelist(address[] memory _users, bool status) external onlyOwner {
     for (uint256 i = 0; i < _users.length; i++) {
       isWhitelist[_users[i]] = status;
     }
-    // TODO: event
   }
 
   function updateBongLockingPeriod(uint256 _bondLockingPeriod) external onlyOwner {
     bondLockingPeriod = _bondLockingPeriod;
-    // TODO: event
   }
 
   function updateDefaultLockingPeriod(uint256 _defaultLockingPeriod) external onlyOwner {
     defaultLockingPeriod = _defaultLockingPeriod;
-    // TODO: event
   }
 
   function updateLockingPeriod(address[] memory _users, uint256[] memory _periods) external onlyOwner {
@@ -312,7 +348,6 @@ contract Staking is Ownable, IStaking {
     for (uint256 i = 0; i < _users.length; i++) {
       lockingPeriod[_users[i]] = _periods[i];
     }
-    // TODO: event
   }
 
   /********************************** Internal Functions **********************************/
@@ -340,14 +375,14 @@ contract Staking is Ownable, IStaking {
       _locks[length - 1].amount = uint192(uint256(_locks[length - 1].amount).add(_amount));
     }
 
-    // TODO: event
+    emit Stake(msg.sender, _recipient, _amount);
   }
 
   function _unstake(address _recipient, uint256 _amount) internal {
     IXALD(xALD).unstake(msg.sender, _amount);
     IERC20(ALD).safeTransfer(_recipient, _amount);
 
-    // TODO: event
+    emit Unstake(msg.sender, _recipient, _amount);
   }
 
   function _lockingPeriod(address _user) internal view returns (uint256) {

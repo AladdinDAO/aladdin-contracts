@@ -13,54 +13,96 @@ abstract contract SingleRewardVaultBase is VaultBase {
   using SafeERC20 for IERC20;
   using SafeMath for uint256;
 
+  event Deposit(address indexed user, uint256 amount);
+  event Withdraw(address indexed user, uint256 amount);
+  event Claim(address indexed user, uint256 amount);
+  event Harvest(address indexed keeper, uint256 bondAmount, uint256 rewardAmount);
+
+  // The address of reward token.
   address private rewardToken;
 
+  // The last harvest block number.
   uint256 public lastUpdateBlock;
+  // The reward per share.
   uint256 public rewardsPerShareStored;
+  // Mapping from user address to reward per share paid.
   mapping(address => uint256) public userRewardPerSharePaid;
+  // Mapping from user address to reward amount.
   mapping(address => uint256) public rewards;
 
+  /// @param _baseToken The address of staked token.
+  /// @param _depositor The address of RewardBondDepositor.
+  /// @param _governor The address of governor.
+  /// @param _rewardToken The address of reward token.
   constructor(
-    address _token,
+    address _baseToken,
     address _depositor,
     address _governor,
     address _rewardToken
-  ) VaultBase(_token, _depositor, _governor) {
+  ) VaultBase(_baseToken, _depositor, _governor) {
     rewardToken = _rewardToken;
+
+    IERC20(_rewardToken).safeApprove(_depositor, uint256(-1));
   }
 
+  /// @dev return the reward tokens in current vault.
   function getRewardTokens() external view override returns (address[] memory) {
     address[] memory result = new address[](1);
     result[0] = rewardToken;
     return result;
   }
 
-  function earned(address account) public view returns (uint256) {
-    uint256 _balance = balanceOf[account];
+  /// @dev return the reward token earned in current vault.
+  /// @param _account The address of account.
+  function earned(address _account) public view returns (uint256) {
+    uint256 _balance = balanceOf[_account];
     return
-      _balance.mul(rewardsPerShareStored.sub(userRewardPerSharePaid[account])).div(PRECISION).add(rewards[account]);
+      _balance.mul(rewardsPerShareStored.sub(userRewardPerSharePaid[_account])).div(PRECISION).add(rewards[_account]);
   }
 
+  /// @dev Amount of deposit token per vault share
+  function getPricePerFullShare() public view returns (uint256) {
+    return balance.mul(PRECISION).div(_strategyBalance());
+  }
+
+  /// @dev Deposit baseToken to vault.
+  /// @param _amount The amount of token to deposit.
   function deposit(uint256 _amount) external override nonReentrant {
     _updateReward(msg.sender);
 
-    address _token = token; // gas saving
+    address _token = baseToken; // gas saving
     uint256 _pool = IERC20(_token).balanceOf(address(this));
     IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
     _amount = IERC20(_token).balanceOf(address(this)).sub(_pool);
 
-    balanceOf[msg.sender] = balanceOf[msg.sender].add(_amount);
+    uint256 _share;
+    if (balance == 0) {
+      _share = _amount;
+    } else {
+      _share = _amount.mul(balance).div(_strategyBalance());
+    }
+
+    balance = balance.add(_share);
+    balanceOf[msg.sender] = balanceOf[msg.sender].add(_share);
+
     _deposit();
 
-    // TODO: event
+    emit Deposit(msg.sender, _amount);
   }
 
-  function withdraw(uint256 _amount) public override nonReentrant {
+  /// @dev Withdraw baseToken from vault.
+  /// @param _share The share of vault to withdraw.
+  function withdraw(uint256 _share) public override nonReentrant {
+    require(_share <= balanceOf[msg.sender], "Vault: not enough share");
     _updateReward(msg.sender);
 
-    balanceOf[msg.sender] = balanceOf[msg.sender].sub(_amount);
+    uint256 _amount = _share.mul(_strategyBalance()).div(balance);
 
-    address _token = token; // gas saving
+    // sub will not overflow here.
+    balanceOf[msg.sender] = balanceOf[msg.sender] - _share;
+    balance = balance - _share;
+
+    address _token = baseToken; // gas saving
     uint256 _pool = IERC20(_token).balanceOf(address(this));
     if (_pool < _amount) {
       uint256 _withdrawAmount = _amount - _pool;
@@ -75,9 +117,10 @@ abstract contract SingleRewardVaultBase is VaultBase {
 
     IERC20(_token).safeTransfer(msg.sender, _amount);
 
-    // TODO: event
+    emit Withdraw(msg.sender, _amount);
   }
 
+  /// @dev Claim pending reward from vault.
   function claim() public override {
     _updateReward(msg.sender);
 
@@ -87,14 +130,16 @@ abstract contract SingleRewardVaultBase is VaultBase {
       IERC20(rewardToken).safeTransfer(msg.sender, reward);
     }
 
-    // TODO: event
+    emit Claim(msg.sender, reward);
   }
 
+  /// @dev Withdraw and claim pending reward from vault.
   function exit() external override {
     withdraw(balanceOf[msg.sender]);
     claim();
   }
 
+  /// @dev harvest pending reward from strategy.
   function harvest() public override {
     uint256 harvested = IERC20(rewardToken).balanceOf(address(this));
     // Harvest rewards from strategy
@@ -108,27 +153,32 @@ abstract contract SingleRewardVaultBase is VaultBase {
       IRewardBondDepositor(depositor).notifyRewards(msg.sender, _amounts);
     }
 
-    uint256 newRewardAmount = harvested.sub(bondAmount);
+    uint256 rewardAmount = harvested.sub(bondAmount);
     // distribute new rewards to current shares evenly
-    rewardsPerShareStored = rewardsPerShareStored.add(newRewardAmount.mul(1e18).div(balance));
+    rewardsPerShareStored = rewardsPerShareStored.add(rewardAmount.mul(1e18).div(balance));
 
-    // TODO: event
+    emit Harvest(msg.sender, bondAmount, rewardAmount);
   }
 
   /********************************** STRATEGY FUNCTIONS **********************************/
 
-  // Deposit token into strategy. Deposits entire vault balance
+  /// @dev Deposit token into strategy. Deposits entire vault balance
   function _deposit() internal virtual;
 
-  // Withdraw token from strategy. _amount is the amount of deposit tokens
+  /// @dev Withdraw token from strategy. _amount is the amount of deposit tokens
   function _withdraw(uint256 _amount) internal virtual;
 
-  // Harvest rewards from strategy into vault
+  /// @dev Harvest rewards from strategy into vault
   function _harvest() internal virtual;
+
+  /// @dev Return the amount of baseToken in strategy.
+  function _strategyBalance() internal view virtual returns (uint256);
 
   /********************************** INTERNAL FUNCTIONS **********************************/
 
-  function _updateReward(address account) internal {
+  /// @dev Update pending reward for user.
+  /// @param _account The address of account.
+  function _updateReward(address _account) internal {
     if (lastUpdateBlock == block.number) {
       return;
     }
@@ -136,7 +186,7 @@ abstract contract SingleRewardVaultBase is VaultBase {
 
     harvest();
 
-    rewards[account] = earned(account);
-    userRewardPerSharePaid[account] = rewardsPerShareStored;
+    rewards[_account] = earned(_account);
+    userRewardPerSharePaid[_account] = rewardsPerShareStored;
   }
 }

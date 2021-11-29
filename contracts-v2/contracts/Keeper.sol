@@ -8,6 +8,7 @@ import "./interfaces/IVault.sol";
 import "./interfaces/IRewardBondDepositor.sol";
 
 contract Keeper is Ownable {
+  // The address of reward bond depositor.
   address public immutable depositor;
 
   // Record whether an address can call bond or not
@@ -20,10 +21,13 @@ contract Keeper is Ownable {
   // Record whether an address is vault or not.
   mapping(address => bool) public isVault;
 
+  /// @param _depositor The address of reward bond depositor.
   constructor(address _depositor) {
     depositor = _depositor;
   }
 
+  /// @dev bond ald for a list of vaults.
+  /// @param _vaults The address list of vaults.
   function bond(address[] memory _vaults) external {
     require(isBondWhitelist[msg.sender], "Keeper: only bond whitelist");
 
@@ -32,6 +36,7 @@ contract Keeper is Ownable {
     }
   }
 
+  /// @dev bond ald for all supported vaults.
   function bondAll() external {
     require(isBondWhitelist[msg.sender], "Keeper: only bond whitelist");
 
@@ -43,12 +48,14 @@ contract Keeper is Ownable {
     }
   }
 
+  /// @dev rebase ald
   function rebase() external {
     require(isRebaseWhitelist[msg.sender], "Keeper: only rebase whitelist");
 
     IRewardBondDepositor(depositor).rebase();
   }
 
+  /// @dev harvest reward for all supported vaults.
   function harvestAll() external {
     for (uint256 i = 0; i < vaults.length; i++) {
       address _vault = vaults[i];
@@ -58,18 +65,27 @@ contract Keeper is Ownable {
     }
   }
 
+  /// @dev update the whitelist who can call bond.
+  /// @param _users The list of address.
+  /// @param status Whether to add or remove.
   function updateBondWhitelist(address[] memory _users, bool status) external onlyOwner {
     for (uint256 i = 0; i < _users.length; i++) {
       isBondWhitelist[_users[i]] = status;
     }
   }
 
+  /// @dev update the whitelist who can call rebase.
+  /// @param _users The list of address.
+  /// @param status Whether to add or remove.
   function updateRebaseWhitelist(address[] memory _users, bool status) external onlyOwner {
     for (uint256 i = 0; i < _users.length; i++) {
       isRebaseWhitelist[_users[i]] = status;
     }
   }
 
+  /// @dev update supported vault
+  /// @param _vault The address of vault.
+  /// @param status Whether it is add or remove vault.
   function updateVault(address _vault, bool status) external onlyOwner {
     if (status) {
       require(!isVault[_vault], "Keeper: already added");

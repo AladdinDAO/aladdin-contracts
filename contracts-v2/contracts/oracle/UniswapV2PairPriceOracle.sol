@@ -7,23 +7,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "../interfaces/IPriceOracle.sol";
 import "../interfaces/IERC20Metadata.sol";
-
-interface IUniswapV2Pair {
-  function totalSupply() external view returns (uint256);
-
-  function token0() external view returns (address);
-
-  function token1() external view returns (address);
-
-  function getReserves()
-    external
-    view
-    returns (
-      uint112 reserve0,
-      uint112 reserve1,
-      uint32 blockTimestampLast
-    );
-}
+import "../interfaces/IUniswapV2Pair.sol";
 
 contract UniswapV2PairPriceOracle is Ownable, IPriceOracle {
   using SafeMath for uint256;
@@ -34,6 +18,8 @@ contract UniswapV2PairPriceOracle is Ownable, IPriceOracle {
   // The address ald token.
   address public immutable ald;
 
+  /// @param _chainlink The address of chainlink oracle.
+  /// @param _ald The address of ALD token.
   constructor(address _chainlink, address _ald) {
     require(_chainlink != address(0), "UniswapV2PairPriceOracle: zero address");
     require(_ald != address(0), "UniswapV2PairPriceOracle: zero address");
@@ -42,6 +28,9 @@ contract UniswapV2PairPriceOracle is Ownable, IPriceOracle {
     ald = _ald;
   }
 
+  /// @dev Return the usd price of UniswapV2 pair. mutilpled by 1e18
+  /// @notice We only consider the price without ALD.
+  /// @param _pair The address of UniswapV2 pair
   function price(address _pair) public view override returns (uint256) {
     address _token0 = IUniswapV2Pair(_pair).token0();
     address _token1 = IUniswapV2Pair(_pair).token1();
@@ -61,6 +50,10 @@ contract UniswapV2PairPriceOracle is Ownable, IPriceOracle {
     }
   }
 
+  /// @dev Return the usd value of UniswapV2 pair. mutilpled by 1e18
+  /// @notice We only consider the value without ALD.
+  /// @param _pair The address of UniswapV2 pair.
+  /// @param _amount The amount of asset/
   function value(address _pair, uint256 _amount) external view override returns (uint256) {
     uint256 _price = price(_pair);
     return _price.mul(_amount).div(10**IERC20Metadata(_pair).decimals());

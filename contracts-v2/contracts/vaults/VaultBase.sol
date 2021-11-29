@@ -9,14 +9,20 @@ import "../interfaces/IVault.sol";
 abstract contract VaultBase is ReentrancyGuard, IVault {
   uint256 public constant PRECISION = 1e18;
 
-  address public immutable token;
-  address public immutable depositor;
+  // The address of staked token.
+  address public immutable baseToken;
+  // The address of reward bond depositor.
+  address public depositor;
 
+  // The address of governor.
   address public governor;
 
+  // The percentage take from harvested reward to bond.
   uint256 public bondPercentage;
 
+  // The total share of vault.
   uint256 public override balance;
+  // Mapping from user address to vault share.
   mapping(address => uint256) public override balanceOf;
 
   modifier onlyGovernor() {
@@ -25,13 +31,15 @@ abstract contract VaultBase is ReentrancyGuard, IVault {
   }
 
   constructor(
-    address _token,
+    address _baseToken,
     address _depositor,
     address _governor
   ) {
-    token = _token;
+    baseToken = _baseToken;
     depositor = _depositor;
     governor = _governor;
+
+    bondPercentage = PRECISION;
   }
 
   function setGovernor(address _governor) external onlyGovernor {
