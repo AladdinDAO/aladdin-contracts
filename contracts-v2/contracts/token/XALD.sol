@@ -24,10 +24,10 @@ contract XALD is IXALD {
   uint256 private _totalShares;
 
   address public initializer;
-  address public aldStakingContract;
+  address public staking;
 
-  modifier onlyStakingContract() {
-    require(msg.sender == aldStakingContract, "XALD: only ald staking contract");
+  modifier onlyStaking() {
+    require(msg.sender == staking, "XALD: only staking contract");
     _;
   }
 
@@ -35,11 +35,11 @@ contract XALD is IXALD {
     initializer = msg.sender;
   }
 
-  function initialize(address _aldStakingContract) external {
+  function initialize(address _staking) external {
     require(initializer == msg.sender, "XALD: only initializer");
-    require(_aldStakingContract != address(0), "XALD: not zero address");
+    require(_staking != address(0), "XALD: not zero address");
 
-    aldStakingContract = _aldStakingContract;
+    staking = _staking;
     initializer = address(0);
   }
 
@@ -151,13 +151,13 @@ contract XALD is IXALD {
     return true;
   }
 
-  function stake(address _recipient, uint256 _aldAmount) external override {
+  function stake(address _recipient, uint256 _aldAmount) external override onlyStaking {
     uint256 _sharesAmount = getSharesByALD(_aldAmount);
     _totalSupply = _totalSupply.add(_aldAmount);
     _mintShares(_recipient, _sharesAmount);
   }
 
-  function unstake(address _account, uint256 _xALDAmount) external override {
+  function unstake(address _account, uint256 _xALDAmount) external override onlyStaking {
     uint256 _sharesAmount = getSharesByALD(_xALDAmount);
     _totalSupply = _totalSupply.sub(_xALDAmount);
     _burnShares(_account, _sharesAmount);
@@ -166,7 +166,7 @@ contract XALD is IXALD {
   function rebase(
     uint256, /*epoch*/
     uint256 profit
-  ) external override {
+  ) external override onlyStaking {
     _totalSupply = _totalSupply.add(profit);
 
     // TODO: add events, record rebase info.
