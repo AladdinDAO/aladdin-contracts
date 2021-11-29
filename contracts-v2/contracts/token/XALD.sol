@@ -9,6 +9,10 @@ import "../interfaces/IXALD.sol";
 contract XALD is IXALD {
   using SafeMath for uint256;
 
+  event MintShare(address recipient, uint256 share);
+  event BurnShare(address account, uint256 share);
+  event Rebase(uint256 epoch, uint256 profit);
+
   /**
    * @dev xALD balances are dynamic and are calculated based on the accounts' shares
    * and the total amount of staked ALD Token. Account shares aren't normalized, so
@@ -23,8 +27,9 @@ contract XALD is IXALD {
   uint256 private _totalSupply;
   uint256 private _totalShares;
 
-  address public initializer;
   address public staking;
+
+  address private _initializer;
 
   modifier onlyStaking() {
     require(msg.sender == staking, "XALD: only staking contract");
@@ -32,15 +37,15 @@ contract XALD is IXALD {
   }
 
   constructor() {
-    initializer = msg.sender;
+    _initializer = msg.sender;
   }
 
   function initialize(address _staking) external {
-    require(initializer == msg.sender, "XALD: only initializer");
+    require(_initializer == msg.sender, "XALD: only initializer");
     require(_staking != address(0), "XALD: not zero address");
 
     staking = _staking;
-    initializer = address(0);
+    _initializer = address(0);
   }
 
   /**
@@ -163,19 +168,16 @@ contract XALD is IXALD {
     _burnShares(_account, _sharesAmount);
   }
 
-  function rebase(
-    uint256, /*epoch*/
-    uint256 profit
-  ) external override onlyStaking {
+  function rebase(uint256 epoch, uint256 profit) external override onlyStaking {
     _totalSupply = _totalSupply.add(profit);
 
-    // TODO: add events, record rebase info.
+    emit Rebase(epoch, profit);
   }
 
   function getSharesByALD(uint256 _aldAmount) public view override returns (uint256) {
     uint256 totalPooledALD = _totalSupply;
     if (totalPooledALD == 0) {
-      return 0;
+      return _aldAmount;
     } else {
       return _aldAmount.mul(_totalShares).div(totalPooledALD);
     }
@@ -247,6 +249,8 @@ contract XALD is IXALD {
     _totalShares = _totalShares.add(_sharesAmount);
 
     _shares[_recipient] = _shares[_recipient].add(_sharesAmount);
+
+    emit MintShare(_recipient, _sharesAmount);
   }
 
   /**
@@ -263,5 +267,7 @@ contract XALD is IXALD {
     _totalShares = _totalShares.sub(_sharesAmount);
 
     _shares[_account] = accountShares.sub(_sharesAmount);
+
+    emit BurnShare(_account, _sharesAmount);
   }
 }

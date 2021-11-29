@@ -188,13 +188,13 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
   }
 
   function bond(address _vault) external override {
-    require(msg.sender == keeper, "RewardBondDepositor: not approved");
+    require(msg.sender == keeper, "RewardBondDepositor: not keeper");
 
     _bond(_vault);
   }
 
   function rebase() external override {
-    require(msg.sender == keeper, "RewardBondDepositor: not approved");
+    require(msg.sender == keeper, "RewardBondDepositor: not keeper");
 
     Epoch memory _currentEpoch = currentEpoch;
     require(block.number >= currentEpoch.nextBlock, "RewardBondDepositor: too soon");
@@ -230,7 +230,6 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
 
   function updateKeeper(address _keeper) external onlyOwner {
     keeper = _keeper;
-    // TODO: event
   }
 
   function updateVault(address _vault, bool status) external onlyOwner {
@@ -239,13 +238,20 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
       isVault[_vault] = true;
       if (!_listContainsAddress(vaults, _vault)) {
         vaults.push(_vault);
-        rewardTokens[_vault] = IVault(_vault).getRewardTokens();
+
+        address[] memory _rewardTokens = IVault(_vault).getRewardTokens();
+        require(_rewardTokens.length <= MAX_REWARD_TOKENS, "RewardBondDepositor: too much reward");
+        // approve token for treasury
+        for (uint256 i = 0; i < _rewardTokens.length; i++) {
+          IERC20(_rewardTokens[i]).safeApprove(treasury, uint256(-1));
+        }
+
+        rewardTokens[_vault] = _rewardTokens;
       }
     } else {
       require(isVault[_vault], "RewardBondDepositor: already removed");
       isVault[_vault] = false;
     }
-    // TODO: event
   }
 
   /********************************** Internal Functions **********************************/
@@ -275,11 +281,12 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
 
   function _checkpoint(address _vault) internal {
     uint256 _lastBlock = checkpointBlock[_vault];
-    if (_lastBlock < block.number) {
+    if (_lastBlock > 0 && _lastBlock < block.number) {
       uint256 _share = rewardShares[currentEpoch.epochNumber][_vault];
       uint256 _balance = IVault(_vault).balance();
       rewardShares[currentEpoch.epochNumber][_vault] = _share.add(_balance.mul(block.number - _lastBlock));
     }
+    checkpointBlock[_vault] = block.number;
   }
 
   function _userCheckpoint(address _user, address _vault) internal {

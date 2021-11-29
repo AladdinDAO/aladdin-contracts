@@ -127,6 +127,8 @@ contract Treasury is Ownable, ITreasury {
     uint256 _discount = discount[_token];
     uint256 _totalReserve = totalReserveUnderlying.add(totalReserveVaultReward).add(totalReserveLiquidityToken);
 
+    // x = 1 + _value / (_value + _totalReserve) = (_totalReserve + value * 2) / (_totalReserve + vaule);
+    _totalReserve = _totalReserve.add(_value);
     uint256 x = _totalReserve.add(_value).mul(PRECISION).div(_totalReserve);
     uint256 bond = LogExpMath.pow(x, liabilityRatio).sub(PRECISION).mul(_aldSupply).div(PRECISION);
     bond = bond.mul(_discount).div(PRECISION);
