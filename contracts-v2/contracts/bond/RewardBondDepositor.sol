@@ -243,6 +243,7 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
         require(_rewardTokens.length <= MAX_REWARD_TOKENS, "RewardBondDepositor: too much reward");
         // approve token for treasury
         for (uint256 i = 0; i < _rewardTokens.length; i++) {
+          IERC20(_rewardTokens[i]).safeApprove(treasury, 0);
           IERC20(_rewardTokens[i]).safeApprove(treasury, uint256(-1));
         }
 
