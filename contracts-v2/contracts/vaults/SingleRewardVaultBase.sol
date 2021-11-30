@@ -179,7 +179,7 @@ abstract contract SingleRewardVaultBase is VaultBase {
   /// @dev Update pending reward for user.
   /// @param _account The address of account.
   function _updateReward(address _account) internal {
-    if (lastUpdateBlock == block.number) {
+    if (lastUpdateBlock == block.number || balance == 0) {
       return;
     }
     lastUpdateBlock = block.number;

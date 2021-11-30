@@ -504,7 +504,7 @@ contract Staking is Ownable, IStaking {
       uint256 _amount = _locks[i].amount;
       uint256 _startBlock = _locks[i].lockedBlock;
       uint256 _endBlock = _locks[i].unlockBlock;
-      if (_amount > 0 && _startBlock <= block.number) {
+      if (_amount > 0 && _endBlock > _lastBlock + 1) {
         // in this case: _endBlock must greater than _lastBlock
         uint256 _left = Math.max(_lastBlock + 1, _startBlock);
         pendingAmount = pendingAmount.add(_amount.mul(_endBlock - _left).div(_endBlock - _startBlock));
