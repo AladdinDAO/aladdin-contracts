@@ -1,44 +1,6 @@
 import { Assertion } from "chai";
-import { BigNumber, BigNumberish, utils } from "ethers";
+import { BigNumber, BigNumberish } from "ethers";
 import { ethers } from "hardhat";
-
-export function encodeAddLiquidity(
-  amtFarmUser: BigNumber,
-  amtLPUser: BigNumber,
-  amtBaseMin: BigNumber,
-  amtFarmMin: BigNumber,
-  amtLPMin: BigNumber
-) {
-  return utils.defaultAbiCoder.encode(
-    ["bool", "bytes"],
-    [
-      true,
-      utils.defaultAbiCoder.encode(
-        ["uint256", "uint256", "uint256", "uint256", "uint256"],
-        [amtFarmUser, amtLPUser, amtBaseMin, amtFarmMin, amtLPMin]
-      ),
-    ]
-  );
-}
-
-export function encodeRemoveLiquidity(
-  amtLPTake: BigNumber,
-  amtLPWithdraw: BigNumber,
-  amtBaseRepay: BigNumber,
-  minAmtBase: BigNumber,
-  minAmtFarm: BigNumber
-) {
-  return utils.defaultAbiCoder.encode(
-    ["bool", "bytes"],
-    [
-      false,
-      utils.defaultAbiCoder.encode(
-        ["uint256", "uint256", "uint256", "uint256", "uint256"],
-        [amtLPTake, amtLPWithdraw, amtBaseRepay, minAmtBase, minAmtFarm]
-      ),
-    ]
-  );
-}
 
 export async function latest() {
   const block = await ethers.provider.getBlock("latest");

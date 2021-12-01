@@ -61,6 +61,7 @@ describe("DirectBondDepositor.spec", async () => {
     it("should succeed when deposit normal asset", async () => {
       await mockOracle.mock.value.returns(ethers.utils.parseEther("10"));
       await bond.updateBondAsset(token.address, true);
+      await treasury.updateReserves(ethers.utils.parseEther("10"), 0, 0);
 
       const expected = await bond.getBondALD(token.address, ethers.utils.parseEther("1"));
       expect(expected).to.closeToBnR("7895080878992244080", 1, 1000000);
@@ -69,7 +70,7 @@ describe("DirectBondDepositor.spec", async () => {
       await bond.deposit(token.address, ethers.utils.parseEther("1"));
       // about 100 * (pow(2, 0.1) - 1) * 1.1
       expect(await ald.balanceOf(staking.address)).to.eq(expected);
-      expect(await treasury.totalReserveUnderlying()).to.eq(ethers.utils.parseEther("10"));
+      expect(await treasury.totalReserveUnderlying()).to.eq(ethers.utils.parseEther("20"));
       // about 100 * (pow(2, 0.1) - 1) * 1.1 * 0.05 / 0.95
       expect(await ald.balanceOf(await dao.getAddress())).to.eq(expected.mul(5).div(95));
       expect(await treasury.polReserves(token.address)).to.eq(ethers.utils.parseEther("0.5"));

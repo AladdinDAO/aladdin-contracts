@@ -71,6 +71,7 @@ describe("RewardBondDepositor.spec", async () => {
     it("should succeed", async () => {
       await mockOracle.mock.value.returns(ethers.utils.parseEther("10"));
       await bond.updateVault(vault.address, true);
+      await treasury.updateReserves(ethers.utils.parseEther("10"), 0, 0);
       const expected = await treasury.bondOf(token.address, ethers.utils.parseEther("10"));
       expect(expected).to.closeToBnR("7895080878992244080", 1, 1000000);
 

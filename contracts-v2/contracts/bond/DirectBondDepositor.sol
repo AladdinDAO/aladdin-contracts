@@ -34,6 +34,9 @@ contract DirectBondDepositor is Ownable, ReentrancyGuard {
   // Record whether an asset is liquidity token.
   mapping(address => bool) public isLiquidityToken;
 
+  // Mapping from asset address to total deposited amount.
+  mapping(address => uint256) public totalPurchased;
+
   // The address of initializer to initialize staking address.
   address private _initializer;
 
@@ -82,6 +85,8 @@ contract DirectBondDepositor is Ownable, ReentrancyGuard {
     require(isBondAsset[_token], "DirectBondDepositor: not approved");
 
     IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
+
+    totalPurchased[_token] = totalPurchased[_token].add(_amount);
 
     uint256 _bondAmount;
     if (isLiquidityToken[_token]) {

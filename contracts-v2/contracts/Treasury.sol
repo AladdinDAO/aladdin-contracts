@@ -112,6 +112,24 @@ contract Treasury is Ownable, ITreasury {
 
   /********************************** View Functions **********************************/
 
+  /// @dev return the ALD bond price. mutipliled by 1e18
+  function aldBondPrice() public view returns (uint256) {
+    uint256 _totalReserve = totalReserveUnderlying.add(totalReserveVaultReward).add(totalReserveLiquidityToken);
+    uint256 _aldSupply = IERC20(ald).totalSupply();
+    return _totalReserve.mul(1e36).div(_aldSupply).div(liabilityRatio);
+  }
+
+  /// @dev return the amount of bond ALD given token and usd value, without discount.
+  /// @param _value The usd of token.
+  function aldBondPrice(uint256 _value) public view returns (uint256) {
+    uint256 _aldSupply = IERC20(ald).totalSupply();
+    uint256 _totalReserve = totalReserveUnderlying.add(totalReserveVaultReward).add(totalReserveLiquidityToken);
+
+    uint256 x = _totalReserve.add(_value).mul(PRECISION).div(_totalReserve);
+    uint256 bond = LogExpMath.pow(x, liabilityRatio).sub(PRECISION).mul(_aldSupply).div(PRECISION);
+    return bond;
+  }
+
   /// @dev return the usd value given token and amount.
   /// @param _token The address of token.
   /// @param _amount The amount of token.
@@ -123,16 +141,7 @@ contract Treasury is Ownable, ITreasury {
   /// @param _token The address of token.
   /// @param _value The usd of token.
   function bondOf(address _token, uint256 _value) public view override returns (uint256) {
-    uint256 _aldSupply = IERC20(ald).totalSupply();
-    uint256 _discount = discount[_token];
-    uint256 _totalReserve = totalReserveUnderlying.add(totalReserveVaultReward).add(totalReserveLiquidityToken);
-
-    // x = 1 + _value / (_value + _totalReserve) = (_totalReserve + value * 2) / (_totalReserve + vaule);
-    _totalReserve = _totalReserve.add(_value);
-    uint256 x = _totalReserve.add(_value).mul(PRECISION).div(_totalReserve);
-    uint256 bond = LogExpMath.pow(x, liabilityRatio).sub(PRECISION).mul(_aldSupply).div(PRECISION);
-    bond = bond.mul(_discount).div(PRECISION);
-    return bond;
+    return aldBondPrice(_value).mul(discount[_token]).div(PRECISION);
   }
 
   /********************************** Mutated Functions **********************************/

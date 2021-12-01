@@ -53,13 +53,14 @@ describe("Treasury.spec", async () => {
 
     it("should succeed when deposit underlying", async () => {
       await mockOracle.mock.value.returns(ethers.utils.parseEther("10"));
+      await treasury.updateReserves(ethers.utils.parseEther("10"), 0, 0);
       await treasury.updateReserveToken(token.address, true);
       await treasury.updateReserveDepositor(await depositor.getAddress(), true);
       await token.connect(depositor).approve(treasury.address, ethers.utils.parseEther("1"));
       await treasury.connect(depositor).deposit(1, token.address, ethers.utils.parseEther("1"));
       // about 100 * (pow(2, 0.1) - 1) * 1.1
       expect(await ald.balanceOf(await depositor.getAddress())).to.closeToBnR("7895080878992244080", 1, 1000000);
-      expect(await treasury.totalReserveUnderlying()).to.eq(ethers.utils.parseEther("10"));
+      expect(await treasury.totalReserveUnderlying()).to.eq(ethers.utils.parseEther("20"));
       // about 100 * (pow(2, 0.1) - 1) * 1.1 * 0.05 / 0.95
       expect(await ald.balanceOf(await dao.getAddress())).to.closeToBnR("415530572578539162", 1, 1000000);
       expect(await treasury.polReserves(token.address)).to.eq(ethers.utils.parseEther("0.5"));
@@ -67,6 +68,7 @@ describe("Treasury.spec", async () => {
 
     it("should succeed when deposit vault reward", async () => {
       await mockOracle.mock.value.returns(ethers.utils.parseEther("10"));
+      await treasury.updateReserves(ethers.utils.parseEther("10"), 0, 0);
       await treasury.updateReserveToken(token.address, true);
       await treasury.updateReserveDepositor(await depositor.getAddress(), true);
       await token.connect(depositor).approve(treasury.address, ethers.utils.parseEther("1"));
@@ -81,6 +83,7 @@ describe("Treasury.spec", async () => {
 
     it("should succeed when deposit liquidity token", async () => {
       await mockOracle.mock.value.returns(ethers.utils.parseEther("10"));
+      await treasury.updateReserves(ethers.utils.parseEther("10"), 0, 0);
       await treasury.updateReserveToken(token.address, true);
       await treasury.updateReserveDepositor(await depositor.getAddress(), true);
       await token.connect(depositor).approve(treasury.address, ethers.utils.parseEther("1"));
