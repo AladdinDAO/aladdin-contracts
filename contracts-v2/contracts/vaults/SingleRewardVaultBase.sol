@@ -62,6 +62,7 @@ abstract contract SingleRewardVaultBase is VaultBase {
 
   /// @dev Amount of deposit token per vault share
   function getPricePerFullShare() public view returns (uint256) {
+    if (balance == 0) return 0;
     return _strategyBalance().mul(PRECISION).div(balance);
   }
 
@@ -141,6 +142,8 @@ abstract contract SingleRewardVaultBase is VaultBase {
 
   /// @dev harvest pending reward from strategy.
   function harvest() public override {
+    if (balance == 0) return;
+
     uint256 harvested = IERC20(rewardToken).balanceOf(address(this));
     // Harvest rewards from strategy
     _harvest();

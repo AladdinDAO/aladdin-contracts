@@ -66,6 +66,7 @@ abstract contract MultipleRewardsVaultBase is VaultBase {
 
   /// @dev Amount of deposit token per vault share
   function getPricePerFullShare() public view returns (uint256) {
+    if (balance == 0) return 0;
     return _strategyBalance().mul(PRECISION).div(balance);
   }
 
@@ -150,6 +151,8 @@ abstract contract MultipleRewardsVaultBase is VaultBase {
 
   /// @dev harvest pending rewards from strategy.
   function harvest() public override {
+    if (balance == 0) return;
+
     uint256 length = rewardTokens.length;
     uint256[] memory harvested = new uint256[](length);
     uint256[] memory bondAmount = new uint256[](length);
