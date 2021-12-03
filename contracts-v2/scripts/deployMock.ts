@@ -99,20 +99,20 @@ const config: {
   wxald: "0xBDC423927e70E4013A7906FE54ad8209643f734C",
   treasury: "0x5aa403275cdf5a487D195E8306FD0628D4F5747B",
   oracles: {
-    chainlink: "0x7f751E35AFe72775Ec88e74386BbC9b68214153e",
-    uniswapETH: "0x4c42A7C2Bb34e2b9dC43098B6874771e2116e940",
+    chainlink: "0x1c0E5Eb9F91A58FCE9F4731a88b3e14f9961482e",
+    uniswapETH: "0x4BAbB3f39718C4567d27aF42A02e8CAF560df85e",
   },
-  rewardBond: "0x46Be096eC3F3b51DfFC1B694789D2c6765f3BD29",
-  directBond: "0xfe8423705161028451757819c4099044459eae88",
-  staking: "0xB8e41FD34b0e5DA4017B15c9f7EC2B4ea180a3b0",
-  distributor: "0xe5140d12d3484123FC7F01c2c01C981a350CF069",
+  rewardBond: "0xCc1034754684A1E688DFDf90E7a859B266f734ec",
+  directBond: "0x71E60b439c533b09cB23dd2BCd439A8c337A5C97",
+  staking: "0x46Be096eC3F3b51DfFC1B694789D2c6765f3BD29",
+  distributor: "0xfe8423705161028451757819c4099044459eae88",
   vaults: {
     convex: {
-      mim: "0x0C23171Ee3794643F7B3C15B66b9878874AA47AA",
-      ren: "0x6cd06c8a609E29a74c865dA5494dafD82D51658b",
-      steth: "0x5A642D1Ff7925f4D609acA214Dd123A5E38688D0",
-      tricrypto: "0x4C4B69F5B054EF3F3Bb481424C9Bd85003B359DA",
-      tripool: "0x304d8e2D58d7274D0983dD97A1c4A02fd775a48B",
+      mim: "0xBA6a5b4294ceEdC0Fbc1485fCd513f5A8565774b",
+      ren: "0x5d3387FF435A9D684C4b8c84FC27d2f1a3729b42",
+      steth: "0x0C23171Ee3794643F7B3C15B66b9878874AA47AA",
+      tricrypto: "0x6cd06c8a609E29a74c865dA5494dafD82D51658b",
+      tripool: "0x5A642D1Ff7925f4D609acA214Dd123A5E38688D0",
     },
   },
 };
@@ -441,6 +441,7 @@ async function main() {
   }
 
   await deployConvexVault();
+
   for (const vault of [mimVault, renVault, stethVault, tripoolVault, tricryptoVault]) {
     if (!(await rewardBond.isVault(vault.address))) {
       console.log("add", vault.address, "to reward bond");

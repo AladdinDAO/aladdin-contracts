@@ -43,7 +43,7 @@ contract Distributor is Ownable, IDistributor {
     treasury = _treasury;
     staking = _staking;
 
-    rewardRate = 3e17; // 0.3
+    rewardRate = 3e15; // 0.3%
   }
 
   /// @dev distribute ALD reward to Aladdin Staking contract.

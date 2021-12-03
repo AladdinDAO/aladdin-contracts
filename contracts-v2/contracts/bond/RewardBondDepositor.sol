@@ -20,7 +20,7 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
 
   struct Epoch {
     uint64 epochNumber;
-    uint64 startBlock; // include 
+    uint64 startBlock; // include
     uint64 nextBlock; // not include
     uint64 epochLength;
   }

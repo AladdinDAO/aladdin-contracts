@@ -136,7 +136,6 @@ contract Staking is Ownable, IStaking {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
     uint256 _lastEpoch = checkpoint[_user].epochNumber;
-    if (_lastBlock == block.number) return 0;
 
     (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
 
@@ -148,13 +147,52 @@ contract Staking is Ownable, IStaking {
     return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
   }
 
+  /// @dev return the pending xALD amount from user staking, including locked and unlocked.
+  /// @param _user The address of user.
+  function pendingStakedXALD(address _user) external view returns (uint256) {
+    // be carefull when no checkpoint for _user
+    uint256 _lastBlock = checkpoint[_user].blockNumber;
+
+    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
+
+    uint256 pendingAmount = _getPendingWithList(userStakedLocks[_user], _lastBlock);
+
+    return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
+  }
+
+  /// @dev return the pending xALD amount from user bond, including locked and unlocked.
+  /// @param _user The address of user.
+  function pendingBondXALD(address _user) external view returns (uint256) {
+    // be carefull when no checkpoint for _user
+    uint256 _lastBlock = checkpoint[_user].blockNumber;
+
+    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
+
+    uint256 pendingAmount = _getPendingWithList(userDirectBondLocks[_user], _lastBlock);
+
+    return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
+  }
+
+  /// @dev return the pending xALD amount from user vault reward, including locked and unlocked.
+  /// @param _user The address of user.
+  /// @param _vault The address of vault.
+  function pendingXALDByVault(address _user, address _vault) external view returns (uint256) {
+    // be carefull when no checkpoint for _user
+    uint256 _lastBlock = checkpoint[_user].blockNumber;
+
+    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
+
+    uint256 pendingAmount = _getPendingRewardBondByVault(_user, _vault, _lastBlock);
+
+    return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
+  }
+
   /// @dev return the unlocked xALD amount.
   /// @param _user The address of user.
   function unlockedXALD(address _user) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
     uint256 _lastEpoch = checkpoint[_user].epochNumber;
-    if (_lastBlock == block.number) return 0;
 
     (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
 
@@ -164,6 +202,48 @@ contract Staking is Ownable, IStaking {
     unlockedAmount = unlockedAmount.add(_getRedeemableRewardBond(_user, epochNumber, _lastEpoch, _lastBlock));
 
     return IWXALD(wxALD).wrappedXALDToXALD(unlockedAmount);
+  }
+
+  /// @dev return the unlocked xALD amount from user staking.
+  /// @param _user The address of user.
+  function unlockedStakedXALD(address _user) external view returns (uint256) {
+    // be carefull when no checkpoint for _user
+    uint256 _lastBlock = checkpoint[_user].blockNumber;
+    uint256 _lastEpoch = checkpoint[_user].epochNumber;
+
+    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
+
+    uint256 unlockedAmount = _getRedeemableWithList(userStakedLocks[_user], _lastBlock);
+
+    return IWXALD(wxALD).wrappedXALDToXALD(unlockedAmount);
+  }
+
+  /// @dev return the unlocked xALD amount from user bond.
+  /// @param _user The address of user.
+  function unlockedBondXALD(address _user) external view returns (uint256) {
+    // be carefull when no checkpoint for _user
+    uint256 _lastBlock = checkpoint[_user].blockNumber;
+    uint256 _lastEpoch = checkpoint[_user].epochNumber;
+
+    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
+
+    uint256 unlockedAmount = _getRedeemableWithList(userDirectBondLocks[_user], _lastBlock);
+
+    return IWXALD(wxALD).wrappedXALDToXALD(unlockedAmount);
+  }
+
+  /// @dev return the unlocked xALD amount from user vault reward.
+  /// @param _user The address of user.
+  /// @param _vault The address of vault.
+  function unlockedVaultXALD(address _user, address _vault) external view returns (uint256) {
+    // be carefull when no checkpoint for _user
+    uint256 _lastBlock = checkpoint[_user].blockNumber;
+
+    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
+
+    uint256 pendingAmount = _getRedeemableRewardBondByVault(_user, _vault, _lastBlock);
+
+    return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
   }
 
   /********************************** Mutated Functions **********************************/
@@ -292,12 +372,10 @@ contract Staking is Ownable, IStaking {
       return;
     }
 
-    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
-
     uint256 unlockedAmount = _redeemWithList(userStakedLocks[msg.sender], _lastBlock);
     unlockedAmount = unlockedAmount.add(_redeemWithList(userDirectBondLocks[msg.sender], _lastBlock));
     unlockedAmount = unlockedAmount.add(_redeemWithList(userRewardBondLocks[msg.sender], _lastBlock));
-    unlockedAmount = unlockedAmount.add(_redeemRewardBondLocks(msg.sender, epochNumber, _lastEpoch, _lastBlock));
+    unlockedAmount = unlockedAmount.add(_redeemRewardBondLocks(msg.sender, _lastEpoch, _lastBlock));
 
     // find the unlocked xALD amount
     unlockedAmount = IWXALD(wxALD).unwrap(unlockedAmount);
@@ -311,6 +389,8 @@ contract Staking is Ownable, IStaking {
     } else {
       IERC20(xALD).safeTransfer(_recipient, unlockedAmount);
     }
+
+    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
 
     checkpoint[msg.sender] = Checkpoint({ blockNumber: uint128(block.number), epochNumber: uint128(epochNumber) });
   }
@@ -399,7 +479,6 @@ contract Staking is Ownable, IStaking {
 
   function _redeemRewardBondLocks(
     address _user,
-    uint256 _epochNumber,
     uint256 _lastEpoch,
     uint256 _lastBlock
   ) internal returns (uint256) {
@@ -415,7 +494,7 @@ contract Staking is Ownable, IStaking {
         _user,
         _vault
       );
-      for (uint256 _epoch = _lastEpoch; _epoch < _epochNumber; _epoch++) {
+      for (uint256 _epoch = _lastEpoch; _epoch < _shares.length; _epoch++) {
         uint256 _share = _shares[_epoch - _lastEpoch];
         if (_share > 0) {
           uint256 _amount;
@@ -592,6 +671,66 @@ contract Staking is Ownable, IStaking {
       }
     }
 
+    return pendingAmount;
+  }
+
+  function _getRedeemableRewardBondByVault(
+    address _user,
+    address _vault,
+    uint256 _lastBlock
+  ) internal view returns (uint256) {
+    uint256 unlockedAmount;
+    uint256[] memory _shares = IRewardBondDepositor(rewardBondDepositor).getAccountRewardShareSince(0, _user, _vault);
+
+    for (uint256 _epoch = 0; _epoch < _shares.length; _epoch++) {
+      uint256 _unlockBlock = rewardBondLocks[_epoch].unlockBlock;
+      if (_unlockBlock <= _lastBlock + 1) continue;
+
+      uint256 _share = _shares[_epoch];
+      if (_share == 0) continue;
+      uint256 _amount = rewardBondLocks[_epoch].amounts[_vault];
+      uint256 _lockedBlock = rewardBondLocks[_epoch].lockedBlock;
+      {
+        uint256 _totalShare = IRewardBondDepositor(rewardBondDepositor).rewardShares(_epoch, _vault);
+        _amount = _amount.mul(_share).div(_totalShare);
+      }
+      // [_lockedBlock, _unlockBlock), [_lastBlock + 1, block.number + 1)
+      uint256 _left = Math.max(_lockedBlock, _lastBlock + 1);
+      uint256 _right = Math.min(_unlockBlock, block.number + 1);
+      if (_left < _right) {
+        unlockedAmount = unlockedAmount.add(_amount.mul(_right - _left).div(_unlockBlock - _lockedBlock));
+      }
+    }
+    return unlockedAmount;
+  }
+
+  function _getPendingRewardBondByVault(
+    address _user,
+    address _vault,
+    uint256 _lastBlock
+  ) internal view returns (uint256) {
+    uint256 pendingAmount;
+    uint256[] memory _shares = IRewardBondDepositor(rewardBondDepositor).getAccountRewardShareSince(0, _user, _vault);
+
+    for (uint256 _epoch = 0; _epoch < _shares.length; _epoch++) {
+      uint256 _unlockBlock = rewardBondLocks[_epoch].unlockBlock;
+      if (_unlockBlock <= _lastBlock + 1) continue;
+
+      uint256 _share = _shares[_epoch];
+      if (_share == 0) continue;
+
+      uint256 _amount = rewardBondLocks[_epoch].amounts[_vault];
+      uint256 _lockedBlock = rewardBondLocks[_epoch].lockedBlock;
+      {
+        uint256 _totalShare = IRewardBondDepositor(rewardBondDepositor).rewardShares(_epoch, _vault);
+        _amount = _amount.mul(_share).div(_totalShare);
+      }
+      // [_lockedBlock, _unlockBlock), [_lastBlock + 1, oo)
+      uint256 _left = Math.max(_lockedBlock, _lastBlock + 1);
+      if (_left < _unlockBlock) {
+        pendingAmount = pendingAmount.add(_amount.mul(_unlockBlock - _left).div(_unlockBlock - _lockedBlock));
+      }
+    }
     return pendingAmount;
   }
 }

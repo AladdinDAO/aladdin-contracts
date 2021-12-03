@@ -82,6 +82,7 @@ describe("RewardBondDepositor.spec", async () => {
     const Distributor = await ethers.getContractFactory("Distributor", deployer);
     distributor = await Distributor.deploy(ald.address, treasury.address, staking.address);
     await distributor.deployed();
+    await distributor.updateRewardRate(ethers.utils.parseEther("0.3"));
 
     const MockVault = await ethers.getContractFactory("MockVault", deployer);
     vault = await MockVault.deploy(rewardBond.address, [token.address]);

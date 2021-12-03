@@ -62,7 +62,7 @@ abstract contract SingleRewardVaultBase is VaultBase {
 
   /// @dev Amount of deposit token per vault share
   function getPricePerFullShare() public view returns (uint256) {
-    return balance.mul(PRECISION).div(_strategyBalance());
+    return _strategyBalance().mul(PRECISION).div(balance);
   }
 
   /// @dev Deposit baseToken to vault.
