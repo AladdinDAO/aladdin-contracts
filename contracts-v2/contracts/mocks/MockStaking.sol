@@ -14,11 +14,11 @@ contract MockStaking {
     ald = _ald;
   }
 
-  function bondFor(address _recipient, uint256 _amount) external {
+  function bondFor(address, uint256 _amount) external {
     IERC20(ald).safeTransferFrom(msg.sender, address(this), _amount);
   }
 
-  function rewardBond(address _vault, uint256 _amount) external {
+  function rewardBond(address, uint256 _amount) external {
     IERC20(ald).safeTransferFrom(msg.sender, address(this), _amount);
   }
 

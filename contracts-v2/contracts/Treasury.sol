@@ -38,6 +38,9 @@ contract Treasury is Ownable, ITreasury {
 
   uint256 private constant PRECISION = 1e18;
 
+  // The address of governor.
+  address public governor;
+
   // The address of ALD token
   address public immutable ald;
   // The address of ALD DAO
@@ -96,6 +99,11 @@ contract Treasury is Ownable, ITreasury {
   uint256 public totalReserveVaultReward;
   // The USD value of all reserves from liquidity token. Multiplied by 1e18
   uint256 public totalReserveLiquidityToken;
+
+  modifier onlyGovernor() {
+    require(msg.sender == governor || msg.sender == owner(), "Treasury: only governor");
+    _;
+  }
 
   /// @param _ald The address of ALD token
   /// @param _aldDAO The address of ALD DAO
@@ -238,6 +246,10 @@ contract Treasury is Ownable, ITreasury {
 
   /********************************** Restricted Functions **********************************/
 
+  function updateGovernor(address _governor) external onlyOwner {
+    governor = _governor;
+  }
+
   /// @dev update reserve token
   /// @param _token The address of token.
   /// @param _isAdd Whether it is add or remove token.
@@ -296,7 +308,7 @@ contract Treasury is Ownable, ITreasury {
   /// @dev update discount factor for token.
   /// @param _token The address of token.
   /// @param _discount The discount factor. multipled by 1e18
-  function updateDiscount(address _token, uint256 _discount) external onlyOwner {
+  function updateDiscount(address _token, uint256 _discount) external onlyGovernor {
     discount[_token] = _discount;
 
     emit UpdateDiscount(_token, _discount);
@@ -348,7 +360,7 @@ contract Treasury is Ownable, ITreasury {
     uint256 _totalReserveUnderlying,
     uint256 _totalReserveVaultReward,
     uint256 _totalReserveLiquidityToken
-  ) external onlyOwner {
+  ) external onlyGovernor {
     totalReserveUnderlying = _totalReserveUnderlying;
     totalReserveVaultReward = _totalReserveVaultReward;
     totalReserveLiquidityToken = _totalReserveLiquidityToken;

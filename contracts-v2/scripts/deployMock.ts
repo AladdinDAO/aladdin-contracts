@@ -449,6 +449,16 @@ async function main() {
       await tx.wait();
     }
   }
+
+  if ((await treasury.totalReserveUnderlying()).eq(constants.Zero)) {
+    console.log("set reserve for treasury");
+    const tx = await treasury.updateReserves(
+      ethers.utils.parseEther("1000"),
+      ethers.utils.parseEther("1000"),
+      ethers.utils.parseEther("1000")
+    );
+    await tx.wait();
+  }
 }
 
 main().catch((error) => {

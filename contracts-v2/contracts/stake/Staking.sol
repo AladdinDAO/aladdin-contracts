@@ -47,6 +47,9 @@ contract Staking is Ownable, IStaking {
     uint128 blockNumber;
   }
 
+  // The address of governor.
+  address public governor;
+
   // The address of ALD token.
   address public immutable ALD;
   // The address of xALD token.
@@ -94,6 +97,11 @@ contract Staking is Ownable, IStaking {
     _;
   }
 
+  modifier onlyGovernor() {
+    require(msg.sender == governor || msg.sender == owner(), "Treasury: only governor");
+    _;
+  }
+
   /// @param _ALD The address of ALD token.
   /// @param _xALD The address of xALD token.
   /// @param _wxALD The address of wxALD token.
@@ -130,6 +138,32 @@ contract Staking is Ownable, IStaking {
 
   /********************************** View Functions **********************************/
 
+  /// @dev return the full vested block (staking and bond) for given user
+  /// @param _user The address of user;
+  function fullyVestedBlock(address _user) external view returns (uint256, uint256) {
+    uint256 stakeVestedBlock;
+    {
+      UserLockedBalance[] storage _locks = userStakedLocks[_user];
+      for (uint256 i = 0; i < _locks.length; i++) {
+        UserLockedBalance storage _lock = _locks[i];
+        if (_lock.amount > 0) {
+          stakeVestedBlock = Math.max(stakeVestedBlock, _lock.unlockBlock);
+        }
+      }
+    }
+    uint256 bondVestedBlock;
+    {
+      UserLockedBalance[] storage _locks = userDirectBondLocks[_user];
+      for (uint256 i = 0; i < _locks.length; i++) {
+        UserLockedBalance storage _lock = _locks[i];
+        if (_lock.amount > 0) {
+          bondVestedBlock = Math.max(bondVestedBlock, _lock.unlockBlock);
+        }
+      }
+    }
+    return (stakeVestedBlock, bondVestedBlock);
+  }
+
   /// @dev return the pending xALD amount including locked and unlocked.
   /// @param _user The address of user.
   function pendingXALD(address _user) external view returns (uint256) {
@@ -137,12 +171,10 @@ contract Staking is Ownable, IStaking {
     uint256 _lastBlock = checkpoint[_user].blockNumber;
     uint256 _lastEpoch = checkpoint[_user].epochNumber;
 
-    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
-
     uint256 pendingAmount = _getPendingWithList(userStakedLocks[_user], _lastBlock);
     pendingAmount = pendingAmount.add(_getPendingWithList(userDirectBondLocks[_user], _lastBlock));
     pendingAmount = pendingAmount.add(_getPendingWithList(userRewardBondLocks[_user], _lastBlock));
-    pendingAmount = pendingAmount.add(_getPendingRewardBond(_user, epochNumber, _lastEpoch, _lastBlock));
+    pendingAmount = pendingAmount.add(_getPendingRewardBond(_user, _lastEpoch, _lastBlock));
 
     return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
   }
@@ -152,8 +184,6 @@ contract Staking is Ownable, IStaking {
   function pendingStakedXALD(address _user) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
-
-    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
 
     uint256 pendingAmount = _getPendingWithList(userStakedLocks[_user], _lastBlock);
 
@@ -165,8 +195,6 @@ contract Staking is Ownable, IStaking {
   function pendingBondXALD(address _user) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
-
-    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
 
     uint256 pendingAmount = _getPendingWithList(userDirectBondLocks[_user], _lastBlock);
 
@@ -180,8 +208,6 @@ contract Staking is Ownable, IStaking {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
 
-    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
-
     uint256 pendingAmount = _getPendingRewardBondByVault(_user, _vault, _lastBlock);
 
     return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
@@ -194,12 +220,10 @@ contract Staking is Ownable, IStaking {
     uint256 _lastBlock = checkpoint[_user].blockNumber;
     uint256 _lastEpoch = checkpoint[_user].epochNumber;
 
-    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
-
     uint256 unlockedAmount = _getRedeemableWithList(userStakedLocks[_user], _lastBlock);
     unlockedAmount = unlockedAmount.add(_getRedeemableWithList(userDirectBondLocks[_user], _lastBlock));
     unlockedAmount = unlockedAmount.add(_getRedeemableWithList(userRewardBondLocks[_user], _lastBlock));
-    unlockedAmount = unlockedAmount.add(_getRedeemableRewardBond(_user, epochNumber, _lastEpoch, _lastBlock));
+    unlockedAmount = unlockedAmount.add(_getRedeemableRewardBond(_user, _lastEpoch, _lastBlock));
 
     return IWXALD(wxALD).wrappedXALDToXALD(unlockedAmount);
   }
@@ -209,9 +233,6 @@ contract Staking is Ownable, IStaking {
   function unlockedStakedXALD(address _user) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
-    uint256 _lastEpoch = checkpoint[_user].epochNumber;
-
-    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
 
     uint256 unlockedAmount = _getRedeemableWithList(userStakedLocks[_user], _lastBlock);
 
@@ -223,9 +244,6 @@ contract Staking is Ownable, IStaking {
   function unlockedBondXALD(address _user) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
-    uint256 _lastEpoch = checkpoint[_user].epochNumber;
-
-    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
 
     uint256 unlockedAmount = _getRedeemableWithList(userDirectBondLocks[_user], _lastBlock);
 
@@ -238,8 +256,6 @@ contract Staking is Ownable, IStaking {
   function unlockedVaultXALD(address _user, address _vault) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
-
-    (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
 
     uint256 pendingAmount = _getRedeemableRewardBondByVault(_user, _vault, _lastBlock);
 
@@ -397,11 +413,15 @@ contract Staking is Ownable, IStaking {
 
   /********************************** Restricted Functions **********************************/
 
+  function updateGovernor(address _governor) external onlyOwner {
+    governor = _governor;
+  }
+
   function updateDistributor(address _distributor) external onlyOwner {
     distributor = _distributor;
   }
 
-  function updatePaused(bool _paused) external onlyOwner {
+  function updatePaused(bool _paused) external onlyGovernor {
     paused = _paused;
   }
 
@@ -595,7 +615,6 @@ contract Staking is Ownable, IStaking {
 
   function _getRedeemableRewardBond(
     address _user,
-    uint256 _epochNumber,
     uint256 _lastEpoch,
     uint256 _lastBlock
   ) internal view returns (uint256) {
@@ -608,7 +627,7 @@ contract Staking is Ownable, IStaking {
         _user,
         _vault
       );
-      for (uint256 _epoch = _lastEpoch; _epoch < _epochNumber; _epoch++) {
+      for (uint256 _epoch = _lastEpoch; _epoch < _shares.length; _epoch++) {
         uint256 _share = _shares[_epoch - _lastEpoch];
         if (_share > 0) {
           uint256 _amount;
@@ -636,7 +655,6 @@ contract Staking is Ownable, IStaking {
 
   function _getPendingRewardBond(
     address _user,
-    uint256 _epochNumber,
     uint256 _lastEpoch,
     uint256 _lastBlock
   ) internal view returns (uint256) {
@@ -649,7 +667,7 @@ contract Staking is Ownable, IStaking {
         _user,
         _vault
       );
-      for (uint256 _epoch = _lastEpoch; _epoch < _epochNumber; _epoch++) {
+      for (uint256 _epoch = _lastEpoch; _epoch < _shares.length; _epoch++) {
         uint256 _share = _shares[_epoch - _lastEpoch];
         if (_share > 0) {
           uint256 _amount;
