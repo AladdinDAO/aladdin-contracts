@@ -50,7 +50,7 @@ contract Airdrop {
   }
 
   function distribute(address[] memory _users, uint256[] memory _amounts) external {
-    require(_users.length != _amounts.length, "Airdrop: length mismatch");
+    require(_users.length == _amounts.length, "Airdrop: length mismatch");
 
     uint256 _totalAmount;
     for (uint256 i = 0; i < _amounts.length; i++) {

@@ -53,8 +53,22 @@ describe("DirectBondDepositor.spec", async () => {
 
   context("#deposit", async () => {
     it("should revert, when token not approved", async () => {
-      await expect(bond.deposit(token.address, ethers.utils.parseEther("1"))).to.revertedWith(
-        "DirectBondDepositor: not approved"
+      await expect(
+        bond.deposit(token.address, ethers.utils.parseEther("1"), ethers.utils.parseEther("1"))
+      ).to.revertedWith("DirectBondDepositor: not approved");
+    });
+
+    it("should revert, when bond amout not enough", async () => {
+      await mockOracle.mock.value.returns(ethers.utils.parseEther("10"));
+      await bond.updateBondAsset(token.address, true);
+      await treasury.updateReserves(ethers.utils.parseEther("10"), 0, 0);
+
+      const expected = await bond.getBondALD(token.address, ethers.utils.parseEther("1"));
+      expect(expected).to.closeToBnR("7895080878992244080", 1, 1000000);
+
+      await token.approve(bond.address, ethers.utils.parseEther("1"));
+      await expect(bond.deposit(token.address, ethers.utils.parseEther("1"), expected.add(1))).to.revertedWith(
+        "DirectBondDepositor: bond not enough"
       );
     });
 
@@ -67,7 +81,7 @@ describe("DirectBondDepositor.spec", async () => {
       expect(expected).to.closeToBnR("7895080878992244080", 1, 1000000);
 
       await token.approve(bond.address, ethers.utils.parseEther("1"));
-      await bond.deposit(token.address, ethers.utils.parseEther("1"));
+      await bond.deposit(token.address, ethers.utils.parseEther("1"), expected);
       // about 100 * (pow(2, 0.1) - 1) * 1.1
       expect(await ald.balanceOf(staking.address)).to.eq(expected);
       expect(await treasury.totalReserveUnderlying()).to.eq(ethers.utils.parseEther("20"));

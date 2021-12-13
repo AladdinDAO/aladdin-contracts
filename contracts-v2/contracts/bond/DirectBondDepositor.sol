@@ -81,7 +81,11 @@ contract DirectBondDepositor is Ownable, ReentrancyGuard {
   /// @dev deposit token to bond ALD.
   /// @param _token The address of token.
   /// @param _amount The amount of token.
-  function deposit(address _token, uint256 _amount) external nonReentrant {
+  function deposit(
+    address _token,
+    uint256 _amount,
+    uint256 _minBondAmount
+  ) external nonReentrant {
     require(isBondAsset[_token], "DirectBondDepositor: not approved");
 
     IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
@@ -94,6 +98,8 @@ contract DirectBondDepositor is Ownable, ReentrancyGuard {
     } else {
       _bondAmount = ITreasury(treasury).deposit(ITreasury.ReserveType.UNDERLYING, _token, _amount);
     }
+
+    require(_bondAmount >= _minBondAmount, "DirectBondDepositor: bond not enough");
 
     IStaking(staking).bondFor(msg.sender, _bondAmount);
 
