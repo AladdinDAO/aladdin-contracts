@@ -207,8 +207,9 @@ contract Staking is Ownable, IStaking {
   function pendingXALDByVault(address _user, address _vault) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
+    uint256 _startEpoch = _findPossibleStartEpoch(_user, _lastBlock);
 
-    uint256 pendingAmount = _getPendingRewardBondByVault(_user, _vault, _lastBlock);
+    uint256 pendingAmount = _getPendingRewardBondByVault(_user, _vault, _startEpoch, _lastBlock);
 
     return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
   }
@@ -253,11 +254,12 @@ contract Staking is Ownable, IStaking {
   /// @dev return the unlocked xALD amount from user vault reward.
   /// @param _user The address of user.
   /// @param _vault The address of vault.
-  function unlockedVaultXALD(address _user, address _vault) external view returns (uint256) {
+  function unlockedXALDByVault(address _user, address _vault) external view returns (uint256) {
     // be carefull when no checkpoint for _user
     uint256 _lastBlock = checkpoint[_user].blockNumber;
+    uint256 _startEpoch = _findPossibleStartEpoch(_user, _lastBlock);
 
-    uint256 pendingAmount = _getRedeemableRewardBondByVault(_user, _vault, _lastBlock);
+    uint256 pendingAmount = _getRedeemableRewardBondByVault(_user, _vault, _startEpoch, _lastBlock);
 
     return IWXALD(wxALD).wrappedXALDToXALD(pendingAmount);
   }
@@ -502,51 +504,56 @@ contract Staking is Ownable, IStaking {
     uint256 _lastEpoch,
     uint256 _lastBlock
   ) internal returns (uint256) {
+    uint256 unlockedAmount;
+
+    address[] memory _vaults = IRewardBondDepositor(rewardBondDepositor).getVaultsFromAccount(_user);
+    for (uint256 i = 0; i < _vaults.length; i++) {
+      unlockedAmount = unlockedAmount.add(_redeemRewardBondLocksByVault(_user, _vaults[i], _lastEpoch, _lastBlock));
+    }
+
+    return unlockedAmount;
+  }
+
+  function _redeemRewardBondLocksByVault(
+    address _user,
+    address _vault,
+    uint256 _startEpoch,
+    uint256 _lastBlock
+  ) internal returns (uint256) {
+    IRewardBondDepositor _depositor = IRewardBondDepositor(rewardBondDepositor); // gas saving
     UserLockedBalance[] storage _locks = userRewardBondLocks[_user];
     uint256 unlockedAmount;
 
-    // handle rewardBondLocks
-    address[] memory _vaults = IRewardBondDepositor(rewardBondDepositor).getVaultsFromAccount(_user);
-    for (uint256 i = 0; i < _vaults.length; i++) {
-      address _vault = _vaults[i];
-      uint256[] memory _shares = IRewardBondDepositor(rewardBondDepositor).getAccountRewardShareSince(
-        _lastEpoch,
-        _user,
-        _vault
-      );
-      for (uint256 _epoch = _lastEpoch; _epoch < _shares.length; _epoch++) {
-        uint256 _share = _shares[_epoch - _lastEpoch];
-        if (_share > 0) {
-          uint256 _amount;
-          uint256 _lockedBlock;
-          uint256 _unlockBlock;
-          {
-            RewardBondBalance storage _lock = rewardBondLocks[_epoch];
-            uint256 _totalShare = IRewardBondDepositor(rewardBondDepositor).rewardShares(_epoch, _vault);
-            _amount = _lock.amounts[_vault].mul(_share).div(_totalShare);
-            _lockedBlock = _lock.lockedBlock;
-            _unlockBlock = _lock.unlockBlock;
-          }
-          // [_lockedBlock, _unlockBlock), [_lastBlock + 1, block.number + 1)
-          uint256 _left = Math.max(_lockedBlock, _lastBlock + 1);
-          uint256 _right = Math.min(_unlockBlock, block.number + 1);
-          if (_left < _right) {
-            unlockedAmount = unlockedAmount.add(_amount.mul(_right - _left).div(_unlockBlock - _lockedBlock));
-          }
-          // some reward unlocked
-          if (_unlockBlock > block.number + 1) {
-            _locks.push(
-              UserLockedBalance({
-                amount: uint192(_amount),
-                lockedBlock: uint32(_lockedBlock),
-                unlockBlock: uint32(_unlockBlock)
-              })
-            );
-          }
-        }
+    uint256[] memory _shares = _depositor.getAccountRewardShareSince(_startEpoch, _user, _vault);
+    for (uint256 i = 0; i < _shares.length; i++) {
+      if (_shares[i] == 0) continue;
+
+      uint256 _epoch = _startEpoch + i;
+      uint256 _amount = rewardBondLocks[_epoch].amounts[_vault];
+      {
+        uint256 _totalShare = _depositor.rewardShares(_epoch, _vault);
+        _amount = _amount.mul(_shares[i]).div(_totalShare);
+      }
+      uint256 _lockedBlock = rewardBondLocks[_epoch].lockedBlock;
+      uint256 _unlockBlock = rewardBondLocks[_epoch].unlockBlock;
+
+      // [_lockedBlock, _unlockBlock), [_lastBlock + 1, block.number + 1)
+      uint256 _left = Math.max(_lockedBlock, _lastBlock + 1);
+      uint256 _right = Math.min(_unlockBlock, block.number + 1);
+      if (_left < _right) {
+        unlockedAmount = unlockedAmount.add(_amount.mul(_right - _left).div(_unlockBlock - _lockedBlock));
+      }
+      // some reward unlocked
+      if (_unlockBlock > block.number + 1) {
+        _locks.push(
+          UserLockedBalance({
+            amount: uint192(_amount),
+            lockedBlock: uint32(_lockedBlock),
+            unlockBlock: uint32(_unlockBlock)
+          })
+        );
       }
     }
-
     return unlockedAmount;
   }
 
@@ -554,7 +561,7 @@ contract Staking is Ownable, IStaking {
     uint256 length = _locks.length;
     uint256 unlockedAmount = 0;
 
-    for (uint256 i = 0; i < length; i++) {
+    for (uint256 i = 0; i < length; ) {
       uint256 _amount = _locks[i].amount;
       uint256 _startBlock = _locks[i].lockedBlock;
       uint256 _endBlock = _locks[i].unlockBlock;
@@ -564,7 +571,14 @@ contract Staking is Ownable, IStaking {
         uint256 _right = Math.min(block.number + 1, _endBlock);
         unlockedAmount = unlockedAmount.add(_amount.mul(_right - _left).div(_endBlock - _startBlock));
         if (_endBlock <= block.number) {
-          delete _locks[i];
+          // since the order is not important
+          // use swap and delete to reduce the length of array
+          length -= 1;
+          _locks[i] = _locks[length];
+          delete _locks[length];
+          _locks.pop();
+        } else {
+          i++;
         }
       }
     }
@@ -603,6 +617,7 @@ contract Staking is Ownable, IStaking {
       uint256 _amount = _locks[i].amount;
       uint256 _startBlock = _locks[i].lockedBlock;
       uint256 _endBlock = _locks[i].unlockBlock;
+      // [_startBlock, _endBlock), [_lastBlock + 1, oo)
       if (_amount > 0 && _endBlock > _lastBlock + 1) {
         // in this case: _endBlock must greater than _lastBlock
         uint256 _left = Math.max(_lastBlock + 1, _startBlock);
@@ -620,34 +635,9 @@ contract Staking is Ownable, IStaking {
   ) internal view returns (uint256) {
     uint256 unlockedAmount;
     address[] memory _vaults = IRewardBondDepositor(rewardBondDepositor).getVaultsFromAccount(_user);
+
     for (uint256 i = 0; i < _vaults.length; i++) {
-      address _vault = _vaults[i];
-      uint256[] memory _shares = IRewardBondDepositor(rewardBondDepositor).getAccountRewardShareSince(
-        _lastEpoch,
-        _user,
-        _vault
-      );
-      for (uint256 _epoch = _lastEpoch; _epoch < _shares.length; _epoch++) {
-        uint256 _share = _shares[_epoch - _lastEpoch];
-        if (_share > 0) {
-          uint256 _amount;
-          uint256 _lockedBlock;
-          uint256 _unlockBlock;
-          {
-            RewardBondBalance storage _lock = rewardBondLocks[_epoch];
-            uint256 _totalShare = IRewardBondDepositor(rewardBondDepositor).rewardShares(_epoch, _vault);
-            _amount = _lock.amounts[_vault].mul(_share).div(_totalShare);
-            _lockedBlock = _lock.lockedBlock;
-            _unlockBlock = _lock.unlockBlock;
-          }
-          // [_lockedBlock, _unlockBlock), [_lastBlock + 1, block.number + 1)
-          uint256 _left = Math.max(_lockedBlock, _lastBlock + 1);
-          uint256 _right = Math.min(_unlockBlock, block.number + 1);
-          if (_left < _right) {
-            unlockedAmount = unlockedAmount.add(_amount.mul(_right - _left).div(_unlockBlock - _lockedBlock));
-          }
-        }
-      }
+      unlockedAmount = unlockedAmount.add(_getRedeemableRewardBondByVault(_user, _vaults[i], _lastEpoch, _lastBlock));
     }
 
     return unlockedAmount;
@@ -660,33 +650,9 @@ contract Staking is Ownable, IStaking {
   ) internal view returns (uint256) {
     uint256 pendingAmount;
     address[] memory _vaults = IRewardBondDepositor(rewardBondDepositor).getVaultsFromAccount(_user);
+
     for (uint256 i = 0; i < _vaults.length; i++) {
-      address _vault = _vaults[i];
-      uint256[] memory _shares = IRewardBondDepositor(rewardBondDepositor).getAccountRewardShareSince(
-        _lastEpoch,
-        _user,
-        _vault
-      );
-      for (uint256 _epoch = _lastEpoch; _epoch < _shares.length; _epoch++) {
-        uint256 _share = _shares[_epoch - _lastEpoch];
-        if (_share > 0) {
-          uint256 _amount;
-          uint256 _lockedBlock;
-          uint256 _unlockBlock;
-          {
-            RewardBondBalance storage _lock = rewardBondLocks[_epoch];
-            uint256 _totalShare = IRewardBondDepositor(rewardBondDepositor).rewardShares(_epoch, _vault);
-            _amount = _lock.amounts[_vault].mul(_share).div(_totalShare);
-            _lockedBlock = _lock.lockedBlock;
-            _unlockBlock = _lock.unlockBlock;
-          }
-          // [_lockedBlock, _unlockBlock), [_lastBlock + 1, oo)
-          uint256 _left = Math.max(_lockedBlock, _lastBlock + 1);
-          if (_left < _unlockBlock) {
-            pendingAmount = pendingAmount.add(_amount.mul(_unlockBlock - _left).div(_unlockBlock - _lockedBlock));
-          }
-        }
-      }
+      pendingAmount = pendingAmount.add(_getPendingRewardBondByVault(_user, _vaults[i], _lastEpoch, _lastBlock));
     }
 
     return pendingAmount;
@@ -695,22 +661,25 @@ contract Staking is Ownable, IStaking {
   function _getRedeemableRewardBondByVault(
     address _user,
     address _vault,
+    uint256 _startEpoch,
     uint256 _lastBlock
   ) internal view returns (uint256) {
+    IRewardBondDepositor _depositor = IRewardBondDepositor(rewardBondDepositor); // gas saving
     uint256 unlockedAmount;
-    uint256[] memory _shares = IRewardBondDepositor(rewardBondDepositor).getAccountRewardShareSince(0, _user, _vault);
 
-    for (uint256 _epoch = 0; _epoch < _shares.length; _epoch++) {
+    uint256[] memory _shares = _depositor.getAccountRewardShareSince(_startEpoch, _user, _vault);
+    for (uint256 i = 0; i < _shares.length; i++) {
+      if (_shares[i] == 0) continue;
+
+      uint256 _epoch = _startEpoch + i;
       uint256 _unlockBlock = rewardBondLocks[_epoch].unlockBlock;
       if (_unlockBlock <= _lastBlock + 1) continue;
 
-      uint256 _share = _shares[_epoch];
-      if (_share == 0) continue;
       uint256 _amount = rewardBondLocks[_epoch].amounts[_vault];
       uint256 _lockedBlock = rewardBondLocks[_epoch].lockedBlock;
       {
-        uint256 _totalShare = IRewardBondDepositor(rewardBondDepositor).rewardShares(_epoch, _vault);
-        _amount = _amount.mul(_share).div(_totalShare);
+        uint256 _totalShare = _depositor.rewardShares(_epoch, _vault);
+        _amount = _amount.mul(_shares[i]).div(_totalShare);
       }
       // [_lockedBlock, _unlockBlock), [_lastBlock + 1, block.number + 1)
       uint256 _left = Math.max(_lockedBlock, _lastBlock + 1);
@@ -725,23 +694,25 @@ contract Staking is Ownable, IStaking {
   function _getPendingRewardBondByVault(
     address _user,
     address _vault,
+    uint256 _startEpoch,
     uint256 _lastBlock
   ) internal view returns (uint256) {
+    IRewardBondDepositor _depositor = IRewardBondDepositor(rewardBondDepositor); // gas saving
     uint256 pendingAmount;
-    uint256[] memory _shares = IRewardBondDepositor(rewardBondDepositor).getAccountRewardShareSince(0, _user, _vault);
 
-    for (uint256 _epoch = 0; _epoch < _shares.length; _epoch++) {
+    uint256[] memory _shares = _depositor.getAccountRewardShareSince(_startEpoch, _user, _vault);
+    for (uint256 i = 0; i < _shares.length; i++) {
+      if (_shares[i] == 0) continue;
+
+      uint256 _epoch = _startEpoch + i;
       uint256 _unlockBlock = rewardBondLocks[_epoch].unlockBlock;
       if (_unlockBlock <= _lastBlock + 1) continue;
-
-      uint256 _share = _shares[_epoch];
-      if (_share == 0) continue;
 
       uint256 _amount = rewardBondLocks[_epoch].amounts[_vault];
       uint256 _lockedBlock = rewardBondLocks[_epoch].lockedBlock;
       {
-        uint256 _totalShare = IRewardBondDepositor(rewardBondDepositor).rewardShares(_epoch, _vault);
-        _amount = _amount.mul(_share).div(_totalShare);
+        uint256 _totalShare = _depositor.rewardShares(_epoch, _vault);
+        _amount = _amount.mul(_shares[i]).div(_totalShare);
       }
       // [_lockedBlock, _unlockBlock), [_lastBlock + 1, oo)
       uint256 _left = Math.max(_lockedBlock, _lastBlock + 1);
@@ -750,5 +721,53 @@ contract Staking is Ownable, IStaking {
       }
     }
     return pendingAmount;
+  }
+
+  /// @dev Find the possible start epoch for current user to calculate pending/unlocked ALD for vault.
+  /// @param _user The address of user.
+  /// @param _lastBlock The last block user interacted with the contract.
+  function _findPossibleStartEpoch(address _user, uint256 _lastBlock) internal view returns (uint256) {
+    uint256 _minLockedBlock = _findEarlistRewardLockedBlock(_user);
+    uint256 _lastEpoch = checkpoint[_user].blockNumber;
+    if (_minLockedBlock == 0) {
+      // No locks available or all locked ALD are redeemed, in this case,
+      //  + _lastBlock = 0: user didn't interact with the contract, we should calculate from the first epoch
+      //  + _lastBlock != 0: user has interacted with the contract, we should calculate from the last epoch
+      if (_lastBlock == 0) return 0;
+      else return _lastEpoch;
+    } else {
+      // Locks available, we should find the epoch number by searching _minLockedBlock
+      return _findEpochByLockedBlock(_minLockedBlock, _lastEpoch);
+    }
+  }
+
+  /// @dev find the epoch whose lockedBlock is `_lockedBlock`.
+  /// @param _lockedBlock the epoch to find
+  /// @param _epochHint the hint for search the epoch
+  function _findEpochByLockedBlock(uint256 _lockedBlock, uint256 _epochHint) internal view returns (uint256) {
+    // usually at most `bondLockingPeriod` loop is enough.
+    while (_epochHint > 0) {
+      if (rewardBondLocks[_epochHint].lockedBlock == _lockedBlock) break;
+      _epochHint = _epochHint - 1;
+    }
+    return _epochHint;
+  }
+
+  /// @dev find the earlist reward locked block, which will be used to find possible start epoch
+  /// @param _user The address of user.
+  function _findEarlistRewardLockedBlock(address _user) internal view returns (uint256) {
+    UserLockedBalance[] storage _locks = userRewardBondLocks[_user];
+    uint256 length = _locks.length;
+    // no locks or all unlocked and redeemed
+    if (length == 0) return 0;
+
+    uint256 _minLockedBlock = _locks[0].lockedBlock;
+    for (uint256 i = 1; i < length; i++) {
+      uint256 _lockedBlock = _locks[i].lockedBlock;
+      if (_lockedBlock < _minLockedBlock) {
+        _minLockedBlock = _lockedBlock;
+      }
+    }
+    return _minLockedBlock;
   }
 }

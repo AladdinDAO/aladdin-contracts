@@ -9,6 +9,9 @@ import {
   DirectBondDepositor__factory,
   Distributor,
   Distributor__factory,
+  IUniswapV2Pair__factory,
+  Keeper,
+  Keeper__factory,
   MIMConvexVault,
   MIMConvexVault__factory,
   MockERC20,
@@ -27,6 +30,8 @@ import {
   TriCrypto2ConvexVault__factory,
   TriPoolConvexVault,
   TriPoolConvexVault__factory,
+  UniswapV2PairPriceOracle,
+  UniswapV2PairPriceOracle__factory,
   UniswapV2PriceOracle,
   UniswapV2PriceOracle__factory,
   WrappedXALD,
@@ -40,6 +45,8 @@ const chainlinkFeeds: { [name: string]: string } = {
   WETH: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
   WBTC: "0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c",
   CRV: "0xCd627aA160A6fA45Eb793D19Ef54f5062F20f33f",
+  DAI: "0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9",
+  USDC: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6",
 };
 
 const uniswapETHPairs: { [name: string]: string } = {
@@ -48,12 +55,15 @@ const uniswapETHPairs: { [name: string]: string } = {
 };
 
 const discount: { [name: string]: BigNumber } = {
-  WBTC: ethers.utils.parseEther("1.1"),
+  DAI: ethers.utils.parseEther("1"),
+  WBTC: ethers.utils.parseEther("1"),
   WETH: ethers.utils.parseEther("1.1"),
-  SPELL: ethers.utils.parseEther("1.1"),
-  CRV: ethers.utils.parseEther("1.1"),
-  CVX: ethers.utils.parseEther("1.1"),
-  LDO: ethers.utils.parseEther("1.1"),
+  SPELL: ethers.utils.parseEther("1"),
+  CRV: ethers.utils.parseEther("1"),
+  CVX: ethers.utils.parseEther("1"),
+  LDO: ethers.utils.parseEther("1"),
+  ALDWETH: ethers.utils.parseEther("1.1"),
+  ALDUSDC: ethers.utils.parseEther("1.1"),
 };
 
 const config: {
@@ -69,11 +79,13 @@ const config: {
     chainlink?: string;
     uniswapETH?: string;
     uniswapUSDC?: string;
+    uniswapPair?: string;
   };
   rewardBond?: string;
   directBond?: string;
   staking?: string;
   distributor?: string;
+  keeper?: string;
   vaults: {
     convex: {
       mim?: string;
@@ -85,6 +97,7 @@ const config: {
   };
 } = {
   tokens: {
+    DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
     WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
     USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
@@ -92,27 +105,31 @@ const config: {
     CVX: "0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B",
     LDO: "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",
     SPELL: "0x090185f2135308BaD17527004364eBcC2D37e5F6",
+    ALDWETH: "0xED6c2F053AF48Cba6cBC0958124671376f01A903",
+    ALDUSDC: "0xaAa2bB0212Ec7190dC7142cD730173b0A788eC31",
   },
   dao: "0xB5495A8D85EE18cfD0d2816993658D88aF08bEF4",
-  ald: "0x272bFF6ff60a2D614e654ba06AC4A7422630AdE3",
-  xald: "0xb13B85363A25c7361877EebaEcCed99e353F2aF9",
-  wxald: "0xBDC423927e70E4013A7906FE54ad8209643f734C",
-  treasury: "0x5aa403275cdf5a487D195E8306FD0628D4F5747B",
+  ald: "0xb26C4B3Ca601136Daf98593feAeff9E0CA702a8D",
+  xald: "0x136A4eE47367C1937Aa34373E2C8ad92ECa2EB0f",
+  wxald: "0x38CB2BFc78B125bDB4E76a80E05A4Ef9DF5B971e",
+  treasury: "0xD96D57f291096AA637E7502b6D4282815d04f1AC",
   oracles: {
-    chainlink: "0x1c0E5Eb9F91A58FCE9F4731a88b3e14f9961482e",
-    uniswapETH: "0x4BAbB3f39718C4567d27aF42A02e8CAF560df85e",
+    chainlink: "0xbd39d1e57D649abB3B1208e262CAF9270728fd0d",
+    uniswapETH: "0xb7396C5e1fF85c621A82CCAC0E5AC8De801f4220",
+    uniswapPair: "0xB5F48bB848FEED0D152763F3495dE3f7eb90a4A2",
   },
-  rewardBond: "0xCc1034754684A1E688DFDf90E7a859B266f734ec",
-  directBond: "0x71E60b439c533b09cB23dd2BCd439A8c337A5C97",
-  staking: "0x46Be096eC3F3b51DfFC1B694789D2c6765f3BD29",
-  distributor: "0xfe8423705161028451757819c4099044459eae88",
+  rewardBond: "0x829b2acC50D414E0B299f739220E90710F6A4735",
+  directBond: "0x5350107530447E668a00F34E35EA5d355D8093C1",
+  staking: "0x349567Bf61Ea412e400E0e2e8985406B621752C4",
+  distributor: "0xb9D676Fe9B231419187a0BDF6A84199Bb0fEb39E",
+  keeper: "0x8A7485dc9A2c59B3460318F505E23a1A6C4FA25e",
   vaults: {
     convex: {
-      mim: "0xBA6a5b4294ceEdC0Fbc1485fCd513f5A8565774b",
-      ren: "0x5d3387FF435A9D684C4b8c84FC27d2f1a3729b42",
-      steth: "0x0C23171Ee3794643F7B3C15B66b9878874AA47AA",
-      tricrypto: "0x6cd06c8a609E29a74c865dA5494dafD82D51658b",
-      tripool: "0x5A642D1Ff7925f4D609acA214Dd123A5E38688D0",
+      mim: "0xdcac69FCFDa36Ab7440EB55036b57EA7C607dbed",
+      ren: "0x9d894F1DF8Da14271229B6C7F33F4e564a8B5028",
+      steth: "0x24dBFD1F70a2E6a39516CC7D3330C0432Ff28534",
+      tricrypto: "0xb287ba0d791229FFCeCdd009Bb70758460BF3985",
+      tripool: "0x6A11D7eB1c885ad39e1E8E0b1250bcBb5c7689A1",
     },
   },
 };
@@ -123,8 +140,10 @@ let wxald: WrappedXALD;
 let treasury: Treasury;
 let chainlink: ChainlinkPriceOracle;
 let uniswapETH: UniswapV2PriceOracle;
+let uniswapPair: UniswapV2PairPriceOracle;
 let rewardBond: RewardBondDepositor;
 let directBond: DirectBondDepositor;
+let keeper: Keeper;
 let staking: Staking;
 let distributor: Distributor;
 
@@ -136,7 +155,7 @@ let tripoolVault: TriPoolConvexVault;
 
 async function setupReserveToken() {
   // setup reserve tokens
-  for (const name of ["WBTC", "WETH", "CRV", "SPELL", "LDO", "CVX"]) {
+  for (const name of ["DAI", "WBTC", "WETH", "CRV", "SPELL", "LDO", "CVX"]) {
     const address = config.tokens[name];
     if (!(await treasury.isReserveToken(address))) {
       console.log("add", name, "to reserve");
@@ -149,11 +168,25 @@ async function setupReserveToken() {
       await tx.wait();
     }
   }
+  // setup liquidity tokens
+  for (const name of ["ALDWETH", "ALDUSDC"]) {
+    const address = config.tokens[name];
+    if (!(await treasury.isLiquidityToken(address))) {
+      console.log("add", name, "to liquidity token");
+      const tx = await treasury.updateLiquidityToken(address, true);
+      await tx.wait();
+    }
+    if (!(await treasury.discount(address)).eq(discount[name])) {
+      console.log("update discount for", name, "to:", ethers.utils.formatEther(discount[name]));
+      const tx = await treasury.updateDiscount(address, discount[name]);
+      await tx.wait();
+    }
+  }
 }
 
 async function setupOracle() {
   // setup chainlink oracle
-  for (const name of ["WBTC", "WETH", "CRV", "SPELL"]) {
+  for (const name of ["DAI", "USDC", "WBTC", "WETH", "CRV", "SPELL"]) {
     const address = config.tokens[name];
     const feed = chainlinkFeeds[name];
     if ((await chainlink.feeds(address)) !== feed) {
@@ -180,6 +213,16 @@ async function setupOracle() {
     if ((await treasury.priceOracle(address)) !== uniswapETH.address) {
       console.log("Set Treasury price oracle feed for", name);
       const tx = await treasury.updatePriceOracle(address, uniswapETH.address);
+      await tx.wait();
+    }
+  }
+
+  // setup uniswap v2 oracle
+  for (const name of ["ALDWETH", "ALDUSDC"]) {
+    const address = config.tokens[name];
+    if ((await treasury.priceOracle(address)) !== uniswapPair.address) {
+      console.log("Set Treasury price oracle feed for", name);
+      const tx = await treasury.updatePriceOracle(address, uniswapPair.address);
       await tx.wait();
     }
   }
@@ -241,6 +284,31 @@ async function deployConvexVault() {
   } else {
     tripoolVault = TriPoolConvexVault__factory.connect(config.vaults.convex.tripool, deployer);
     console.log("Found TriPoolConvexVault at:", config.vaults.convex.tripool);
+  }
+  if (!(await keeper.isVault(mimVault.address))) {
+    console.log("add mim vault to keeper");
+    const tx = await keeper.updateVault(mimVault.address, true);
+    await tx.wait();
+  }
+  if (!(await keeper.isVault(renVault.address))) {
+    console.log("add ren vault to keeper");
+    const tx = await keeper.updateVault(renVault.address, true);
+    await tx.wait();
+  }
+  if (!(await keeper.isVault(stethVault.address))) {
+    console.log("add steth vault to keeper");
+    const tx = await keeper.updateVault(stethVault.address, true);
+    await tx.wait();
+  }
+  if (!(await keeper.isVault(tricryptoVault.address))) {
+    console.log("add tricrypto vault to keeper");
+    const tx = await keeper.updateVault(tricryptoVault.address, true);
+    await tx.wait();
+  }
+  if (!(await keeper.isVault(tripoolVault.address))) {
+    console.log("add tripool vault to keeper");
+    const tx = await keeper.updateVault(tripoolVault.address, true);
+    await tx.wait();
   }
 }
 
@@ -321,6 +389,18 @@ async function main() {
     console.log("Found UniswapV2PriceOracle at:", config.oracles.uniswapETH);
   }
 
+  // UniswapV2PairPriceOracle
+  if (config.oracles.uniswapPair === undefined) {
+    const UniswapV2PairPriceOracle = await ethers.getContractFactory("UniswapV2PairPriceOracle", deployer);
+    uniswapPair = await UniswapV2PairPriceOracle.deploy(chainlink.address, config.ald);
+    await uniswapETH.deployed();
+    config.oracles.uniswapPair = uniswapPair.address;
+    console.log("Deploy UniswapV2PairPriceOracle at:", config.oracles.uniswapPair);
+  } else {
+    uniswapPair = UniswapV2PairPriceOracle__factory.connect(config.oracles.uniswapPair, deployer);
+    console.log("Found UniswapV2PairPriceOracle at:", config.oracles.uniswapPair);
+  }
+
   await setupOracle();
 
   // RewardBondDepositor
@@ -371,10 +451,40 @@ async function main() {
     console.log("Found Distributor at:", config.distributor);
   }
 
+  // Keeper
+  if (config.keeper === undefined) {
+    const Keeper = await ethers.getContractFactory("Keeper", deployer);
+    keeper = await Keeper.deploy(rewardBond.address);
+    await keeper.deployed();
+    config.keeper = keeper.address;
+    console.log("Deploy Keeper at:", config.keeper);
+  } else {
+    keeper = Keeper__factory.connect(config.keeper, deployer);
+    console.log("Found Keeper at:", config.keeper);
+  }
+
   // setup reward bond
   if ((await rewardBond.staking()) === constants.AddressZero) {
     console.log("Initialize RewardBondDepositor");
     const tx = await rewardBond.initialize(staking.address);
+    await tx.wait();
+  }
+
+  // setup keeper
+  if ((await rewardBond.keeper()) !== keeper.address) {
+    console.log("Initialize Keeper for RewardBondDepositor");
+    const tx = await rewardBond.updateKeeper(keeper.address);
+    await tx.wait();
+  }
+  const keeperWhite = "0xcc1194930B624b94f0365143c18645a329794366";
+  if (!(await keeper.isBondWhitelist(keeperWhite))) {
+    console.log("Initialize Keeper for bond whitelist");
+    const tx = await keeper.updateBondWhitelist([keeperWhite], true);
+    await tx.wait();
+  }
+  if (!(await keeper.isRebaseWhitelist(keeperWhite))) {
+    console.log("Initialize Keeper for rebase whitelist");
+    const tx = await keeper.updateRebaseWhitelist([keeperWhite], true);
     await tx.wait();
   }
 
@@ -431,7 +541,7 @@ async function main() {
   }
 
   // setup asset for direct bond
-  for (const name of ["WBTC", "WETH"]) {
+  for (const name of ["WBTC", "WETH", "DAI", "ALDWETH", "ALDUSDC"]) {
     const address = config.tokens[name];
     if (!(await directBond.isBondAsset(address))) {
       console.log("add", name, "to bond");
@@ -453,9 +563,9 @@ async function main() {
   if ((await treasury.totalReserveUnderlying()).eq(constants.Zero)) {
     console.log("set reserve for treasury");
     const tx = await treasury.updateReserves(
-      ethers.utils.parseEther("1000"),
-      ethers.utils.parseEther("1000"),
-      ethers.utils.parseEther("1000")
+      ethers.utils.parseEther("1500000"),
+      ethers.utils.parseEther("0"),
+      ethers.utils.parseEther("0")
     );
     await tx.wait();
   }

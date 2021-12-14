@@ -178,8 +178,8 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
       uint256 _amount = IERC20(_tokens[i]).balanceOf(address(this)).sub(_pool);
       if (_amount > 0) {
         hasReward = true;
+        _pending.amounts[i] = _pending.amounts[i].add(_amount);
       }
-      _pending.amounts[i] = _pending.amounts[i].add(_amount);
     }
 
     if (hasReward && !_pending.hasReward) {
@@ -215,8 +215,8 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
     epoches[_currentEpoch.epochNumber] = Epoch({
       epochNumber: _currentEpoch.epochNumber,
       startBlock: _currentEpoch.startBlock,
-      nextBlock: uint64(block.number + 1),
-      epochLength: uint64(block.number + 1 - _currentEpoch.startBlock)
+      nextBlock: uint64(block.number),
+      epochLength: uint64(block.number - _currentEpoch.startBlock)
     });
 
     // update current epoch info
@@ -224,8 +224,8 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
     //   + expected end at block.number + _currentEpoch.epochLength
     currentEpoch = Epoch({
       epochNumber: _currentEpoch.epochNumber + 1,
-      startBlock: uint64(block.number + 1),
-      nextBlock: uint64(block.number + _currentEpoch.epochLength + 1),
+      startBlock: uint64(block.number),
+      nextBlock: uint64(block.number + _currentEpoch.epochLength),
       epochLength: _currentEpoch.epochLength
     });
   }
@@ -342,7 +342,7 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
       }
 
       uint256 newShare = uint256(_accountCheckpoint.rewardShare).add(
-        _balance.mul(_next.startBlock - 1 - _accountCheckpoint.blockNumber)
+        _balance.mul(_next.startBlock - _accountCheckpoint.blockNumber)
       );
 
       // push current checkpoint to list
@@ -369,7 +369,7 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
       accountCheckpoint[_user][_vault] = AccountCheckpoint({
         epochNumber: uint32(_cur.epochNumber),
         blockNumber: uint32(block.number),
-        rewardShare: uint192(_balance.mul(block.number - _cur.startBlock + 1))
+        rewardShare: uint192(_balance.mul(block.number - _cur.startBlock))
       });
     }
   }
@@ -416,12 +416,7 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
         if (_epochShare.endEpoch == _epochShare.startEpoch + 1) {
           _shares[j - _epoch] = _epochShare.totalShare;
         } else {
-          if (_epochShare.endEpoch == _cur.epochNumber) {
-            _next = _cur;
-          } else {
-            _next = epoches[j];
-          }
-          _shares[j - _epoch] = uint256(_epochShare.totalShare).mul(_next.epochLength).div(blocks);
+          _shares[j - _epoch] = uint256(_epochShare.totalShare).mul(epoches[j].epochLength).div(blocks);
         }
       }
     }
@@ -447,7 +442,7 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
         _next = epoches[_accountCheckpoint.epochNumber + 1];
       }
       _shares[_accountCheckpoint.epochNumber - _epoch] = uint256(_accountCheckpoint.rewardShare).add(
-        _balance.mul(_next.startBlock - 1 - _accountCheckpoint.blockNumber)
+        _balance.mul(_next.startBlock - _accountCheckpoint.blockNumber)
       );
     }
 

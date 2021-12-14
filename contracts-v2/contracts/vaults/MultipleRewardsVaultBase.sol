@@ -151,7 +151,14 @@ abstract contract MultipleRewardsVaultBase is VaultBase {
 
   /// @dev harvest pending rewards from strategy.
   function harvest() public override {
-    if (balance == 0) return;
+    if (lastUpdateBlock == block.number) {
+      return;
+    }
+    if (balance == 0) {
+      IRewardBondDepositor(depositor).notifyRewards(msg.sender, new uint256[](rewardTokens.length));
+      return;
+    }
+    lastUpdateBlock = block.number;
 
     uint256 length = rewardTokens.length;
     uint256[] memory harvested = new uint256[](length);
@@ -164,15 +171,11 @@ abstract contract MultipleRewardsVaultBase is VaultBase {
 
     for (uint256 i = 0; i < length; i++) {
       harvested[i] = IERC20(rewardTokens[i]).balanceOf(address(this)).sub(harvested[i]);
+      bondAmount[i] = harvested[i].mul(bondPercentage).div(PRECISION);
+      harvested[i] = harvested[i].sub(bondAmount[i]);
     }
 
-    {
-      for (uint256 i = 0; i < length; i++) {
-        bondAmount[i] = harvested[i].mul(bondPercentage).div(PRECISION);
-        harvested[i] = harvested[i].sub(bondAmount[i]);
-      }
-      IRewardBondDepositor(depositor).notifyRewards(msg.sender, bondAmount);
-    }
+    IRewardBondDepositor(depositor).notifyRewards(msg.sender, bondAmount);
 
     // distribute new rewards to current shares evenly
     for (uint256 i = 0; i < length; i++) {
@@ -201,11 +204,6 @@ abstract contract MultipleRewardsVaultBase is VaultBase {
   /// @dev Update pending reward for user.
   /// @param _account The address of account.
   function _updateReward(address _account) internal {
-    if (lastUpdateBlock == block.number || balance == 0) {
-      return;
-    }
-    lastUpdateBlock = block.number;
-
     harvest();
 
     uint256 length = rewardTokens.length;

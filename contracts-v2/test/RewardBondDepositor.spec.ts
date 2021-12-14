@@ -3,13 +3,15 @@ import { RewardBondDepositor, MockERC20, MockStaking, Treasury, MockVault } from
 import { MockContract } from "ethereum-waffle";
 import { ethers } from "hardhat";
 import { deployMockForName } from "./mock";
-import "./utils";
-import { constants, Signer } from "ethers";
+import { BigNumber, constants, Signer } from "ethers";
 import { expect } from "chai";
+import { advanceBlockTo } from "./utils";
 
 describe("RewardBondDepositor.spec", async () => {
   let deployer: Signer;
   let dao: Signer;
+  let alice: Signer;
+  let bob: Signer;
 
   let ald: MockERC20;
   let token: MockERC20;
@@ -20,7 +22,7 @@ describe("RewardBondDepositor.spec", async () => {
   let mockOracle: MockContract;
 
   beforeEach(async () => {
-    [deployer, dao] = await ethers.getSigners();
+    [deployer, dao, alice, bob] = await ethers.getSigners();
 
     const MockERC20 = await ethers.getContractFactory("MockERC20", deployer);
     ald = await MockERC20.deploy("ALD", "ALD", 18);
@@ -88,6 +90,75 @@ describe("RewardBondDepositor.spec", async () => {
       // about 100 * (pow(2, 0.1) - 1) * 1.1 * 0.05 / 0.95
       expect(await ald.balanceOf(await dao.getAddress())).to.eq(expected.mul(5).div(95));
       expect(await treasury.polReserves(token.address)).to.eq(ethers.utils.parseEther("0.5"));
+    });
+
+    it("should calculate share correctly", async () => {
+      const epoch0 = await bond.currentEpoch();
+      await bond.updateVault(vault.address, true);
+      await advanceBlockTo(epoch0.nextBlock.toNumber());
+      await bond.rebase();
+      const aliceList = [
+        BigNumber.from("0"),
+        BigNumber.from("10000"),
+        BigNumber.from("10100"),
+        BigNumber.from("13600"),
+      ];
+      const bobList = [BigNumber.from("0"), BigNumber.from("0"), BigNumber.from("5000"), BigNumber.from("5050")];
+      // 1. alice deposit in epoch 1
+      const epoch1 = await bond.currentEpoch();
+      await vault.changeBalanceAndNotify(await alice.getAddress(), 100, [0]);
+      await advanceBlockTo(epoch1.nextBlock.toNumber());
+      await bond.rebase();
+      for (let i = 0; i < 2; i++) {
+        expect(await bond.getAccountRewardShareSince(i, await alice.getAddress(), vault.address)).to.deep.eq(
+          aliceList.slice(i, 2)
+        );
+        expect(await bond.getAccountRewardShareSince(i, await bob.getAddress(), vault.address)).to.deep.eq(
+          bobList.slice(i, 2)
+        );
+        expect(await bond.rewardShares(i, vault.address)).to.eq(aliceList[i].add(bobList[i]));
+      }
+      // 2. bob deposit in epoch 2
+      const epoch2 = await bond.currentEpoch();
+      await vault.changeBalanceAndNotify(await bob.getAddress(), 50, [0]);
+      await advanceBlockTo(epoch2.nextBlock.toNumber());
+      await bond.rebase();
+      for (let i = 0; i < 3; i++) {
+        expect(await bond.getAccountRewardShareSince(i, await alice.getAddress(), vault.address)).to.deep.eq(
+          aliceList.slice(i, 3)
+        );
+        expect(await bond.getAccountRewardShareSince(i, await bob.getAddress(), vault.address)).to.deep.eq(
+          bobList.slice(i, 3)
+        );
+        expect(await bond.rewardShares(i, vault.address)).to.eq(aliceList[i].add(bobList[i]));
+      }
+      // 3. alice deposit twice in epoch 3
+      const epoch3 = await bond.currentEpoch();
+      await vault.changeBalanceAndNotify(await alice.getAddress(), 10, [0]);
+      await advanceBlockTo(epoch3.startBlock.toNumber() + 50);
+      await vault.changeBalanceAndNotify(await alice.getAddress(), 50, [0]);
+      await advanceBlockTo(epoch3.nextBlock.toNumber());
+      await bond.rebase();
+      for (let i = 0; i < 4; i++) {
+        expect(await bond.getAccountRewardShareSince(i, await alice.getAddress(), vault.address)).to.deep.eq(
+          aliceList.slice(i, 4)
+        );
+        expect(await bond.getAccountRewardShareSince(i, await bob.getAddress(), vault.address)).to.deep.eq(
+          bobList.slice(i, 4)
+        );
+        expect(await bond.rewardShares(i, vault.address)).to.eq(aliceList[i].add(bobList[i]));
+      }
+      // 4. alice deposit in epoch 4
+      await vault.changeBalanceAndNotify(await alice.getAddress(), 50, [0]);
+      for (let i = 0; i < 4; i++) {
+        expect(await bond.getAccountRewardShareSince(i, await alice.getAddress(), vault.address)).to.deep.eq(
+          aliceList.slice(i, 4)
+        );
+        expect(await bond.getAccountRewardShareSince(i, await bob.getAddress(), vault.address)).to.deep.eq(
+          bobList.slice(i, 4)
+        );
+        expect(await bond.rewardShares(i, vault.address)).to.eq(aliceList[i].add(bobList[i]));
+      }
     });
   });
 });

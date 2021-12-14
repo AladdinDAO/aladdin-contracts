@@ -142,7 +142,14 @@ abstract contract SingleRewardVaultBase is VaultBase {
 
   /// @dev harvest pending reward from strategy.
   function harvest() public override {
-    if (balance == 0) return;
+    if (lastUpdateBlock == block.number) {
+      return;
+    }
+    if (balance == 0) {
+      IRewardBondDepositor(depositor).notifyRewards(msg.sender, new uint256[](1));
+      return;
+    }
+    lastUpdateBlock = block.number;
 
     uint256 harvested = IERC20(rewardToken).balanceOf(address(this));
     // Harvest rewards from strategy
@@ -182,11 +189,6 @@ abstract contract SingleRewardVaultBase is VaultBase {
   /// @dev Update pending reward for user.
   /// @param _account The address of account.
   function _updateReward(address _account) internal {
-    if (lastUpdateBlock == block.number || balance == 0) {
-      return;
-    }
-    lastUpdateBlock = block.number;
-
     harvest();
 
     rewards[_account] = earned(_account);

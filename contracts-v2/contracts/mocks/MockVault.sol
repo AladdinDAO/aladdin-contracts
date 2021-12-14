@@ -36,6 +36,17 @@ contract MockVault {
     IRewardBondDepositor(depositor).notifyRewards(_user, _amounts);
   }
 
+  function changeBalanceAndNotify(
+    address _user,
+    int256 _delta,
+    uint256[] memory _amounts
+  ) external {
+    IRewardBondDepositor(depositor).notifyRewards(_user, _amounts);
+
+    balance = uint256(int256(balance) + _delta);
+    balanceOf[_user] = uint256(int256(balanceOf[_user]) + _delta);
+  }
+
   function getRewardTokens() external view returns (address[] memory) {
     return rewardTokens;
   }
