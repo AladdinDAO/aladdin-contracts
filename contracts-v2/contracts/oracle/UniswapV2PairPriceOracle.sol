@@ -62,9 +62,11 @@ contract UniswapV2PairPriceOracle is Ownable, IPriceOracle {
     uint256 _totalSupply = IUniswapV2Pair(_pair).totalSupply();
 
     if (_token0 == _ald) {
+      _validate(_pair, _ald, _token1, _reserve0, _reserve1);
       uint256 _amount = uint256(1e18).mul(_reserve1).div(_totalSupply);
       return IPriceOracle(chainlink).value(_token1, _amount);
     } else {
+      _validate(_pair, _ald, _token0, _reserve1, _reserve0);
       uint256 _amount = uint256(1e18).mul(_reserve0).div(_totalSupply);
       return IPriceOracle(chainlink).value(_token0, _amount);
     }
