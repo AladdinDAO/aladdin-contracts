@@ -13,6 +13,8 @@ abstract contract MultipleRewardsVaultBase is VaultBase {
   using SafeERC20 for IERC20;
   using SafeMath for uint256;
 
+  uint256 private constant MAX_REWARD_TOKENS = 4;
+
   event Deposit(address indexed user, uint256 amount);
   event Withdraw(address indexed user, uint256 amount);
   event Claim(address indexed user, uint256[] amount);
@@ -42,6 +44,7 @@ abstract contract MultipleRewardsVaultBase is VaultBase {
   /// @dev setup reward tokens, should be called in constrctor.
   /// @param _rewardTokens A list of reward tokens.
   function _setupRewardTokens(address[] memory _rewardTokens) internal {
+    require(_rewardTokens.length <= MAX_REWARD_TOKENS, "MultipleRewardsVaultBase: too much reward");
     rewardTokens = _rewardTokens;
     for (uint256 i = 0; i < _rewardTokens.length; i++) {
       IERC20(_rewardTokens[i]).safeApprove(depositor, uint256(-1));
@@ -154,11 +157,11 @@ abstract contract MultipleRewardsVaultBase is VaultBase {
     if (lastUpdateBlock == block.number) {
       return;
     }
+    lastUpdateBlock = block.number;
     if (balance == 0) {
       IRewardBondDepositor(depositor).notifyRewards(msg.sender, new uint256[](rewardTokens.length));
       return;
     }
-    lastUpdateBlock = block.number;
 
     uint256 length = rewardTokens.length;
     uint256[] memory harvested = new uint256[](length);

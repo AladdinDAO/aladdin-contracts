@@ -71,6 +71,9 @@ contract Staking is Ownable, IStaking {
   bool public enableWhitelist;
   mapping(address => bool) public isWhitelist;
 
+  // Whether an address is in black list
+  mapping(address => bool) public blacklist;
+
   // The default locking period in epoch.
   uint256 public defaultLockingPeriod;
   // The bond locking period in epoch.
@@ -383,6 +386,8 @@ contract Staking is Ownable, IStaking {
   /// @param _recipient The address to receive xALD/ALD.
   /// @param __unstake Whether to unstake xALD to ALD.
   function redeem(address _recipient, bool __unstake) external override notPaused {
+    require(!blacklist[msg.sender], "Staking: blacklist");
+
     // be carefull when no checkpoint for msg.sender
     uint256 _lastBlock = checkpoint[msg.sender].blockNumber;
     uint256 _lastEpoch = checkpoint[msg.sender].epochNumber;
@@ -434,6 +439,12 @@ contract Staking is Ownable, IStaking {
   function updateWhitelist(address[] memory _users, bool status) external onlyOwner {
     for (uint256 i = 0; i < _users.length; i++) {
       isWhitelist[_users[i]] = status;
+    }
+  }
+
+  function updateBlacklist(address[] memory _users, bool status) external onlyOwner {
+    for (uint256 i = 0; i < _users.length; i++) {
+      blacklist[_users[i]] = status;
     }
   }
 
@@ -728,7 +739,7 @@ contract Staking is Ownable, IStaking {
   /// @param _lastBlock The last block user interacted with the contract.
   function _findPossibleStartEpoch(address _user, uint256 _lastBlock) internal view returns (uint256) {
     uint256 _minLockedBlock = _findEarlistRewardLockedBlock(_user);
-    uint256 _lastEpoch = checkpoint[_user].blockNumber;
+    uint256 _lastEpoch = checkpoint[_user].epochNumber;
     if (_minLockedBlock == 0) {
       // No locks available or all locked ALD are redeemed, in this case,
       //  + _lastBlock = 0: user didn't interact with the contract, we should calculate from the first epoch

@@ -129,7 +129,7 @@ contract Treasury is Ownable, ITreasury {
 
   /// @dev return the amount of bond ALD given token and usd value, without discount.
   /// @param _value The usd of token.
-  function aldBondPrice(uint256 _value) public view returns (uint256) {
+  function bondOfWithoutDiscount(uint256 _value) public view returns (uint256) {
     uint256 _aldSupply = IERC20(ald).totalSupply();
     uint256 _totalReserve = totalReserveUnderlying.add(totalReserveVaultReward).add(totalReserveLiquidityToken);
 
@@ -149,7 +149,7 @@ contract Treasury is Ownable, ITreasury {
   /// @param _token The address of token.
   /// @param _value The usd of token.
   function bondOf(address _token, uint256 _value) public view override returns (uint256) {
-    return aldBondPrice(_value).mul(discount[_token]).div(PRECISION);
+    return bondOfWithoutDiscount(_value).mul(discount[_token]).div(PRECISION);
   }
 
   /********************************** Mutated Functions **********************************/

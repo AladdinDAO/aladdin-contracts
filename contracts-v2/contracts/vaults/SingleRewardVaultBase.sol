@@ -145,11 +145,11 @@ abstract contract SingleRewardVaultBase is VaultBase {
     if (lastUpdateBlock == block.number) {
       return;
     }
+    lastUpdateBlock = block.number;
     if (balance == 0) {
       IRewardBondDepositor(depositor).notifyRewards(msg.sender, new uint256[](1));
       return;
     }
-    lastUpdateBlock = block.number;
 
     uint256 harvested = IERC20(rewardToken).balanceOf(address(this));
     // Harvest rewards from strategy

@@ -86,6 +86,7 @@ contract DirectBondDepositor is Ownable, ReentrancyGuard {
     uint256 _amount,
     uint256 _minBondAmount
   ) external nonReentrant {
+    require(tx.origin == msg.sender, "DirectBondDepositor: only EOA");
     require(isBondAsset[_token], "DirectBondDepositor: not approved");
 
     IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);

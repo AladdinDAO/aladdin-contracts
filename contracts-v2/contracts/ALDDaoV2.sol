@@ -76,10 +76,10 @@ contract ALDDaoV2 {
   function stake(uint256 _amount) external {
     _updateReward(msg.sender);
 
-    IERC20(dao).safeTransferFrom(msg.sender, address(this), _amount);
-
     totalShares = totalShares.add(_amount);
     shares[msg.sender] = shares[msg.sender].add(_amount);
+
+    IERC20(dao).safeTransferFrom(msg.sender, address(this), _amount);
 
     emit Stake(msg.sender, _amount);
   }

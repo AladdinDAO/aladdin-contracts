@@ -46,10 +46,10 @@ contract UniswapV2PriceOracle is Ownable, IPriceOracle {
 
     // make reserve with scale 1e18
     if (IERC20Metadata(_token0).decimals() < 18) {
-      _reserve0 = _reserve0.mul(10**IERC20Metadata(_token0).decimals());
+      _reserve0 = _reserve0.mul(10**(18 - IERC20Metadata(_token0).decimals()));
     }
     if (IERC20Metadata(_token1).decimals() < 18) {
-      _reserve1 = _reserve1.mul(10**IERC20Metadata(_token1).decimals());
+      _reserve1 = _reserve1.mul(10**(18 - IERC20Metadata(_token1).decimals()));
     }
 
     if (_asset == _token0) {
