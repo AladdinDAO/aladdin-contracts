@@ -49,7 +49,7 @@ contract UniswapV2PairPriceOracle is Ownable, IPriceOracle {
   }
 
   /// @dev Return the usd price of UniswapV2 pair. mutilpled by 1e18
-  /// @notice We only consider the price without ALD.
+  /// @notice We will also consider the price with ALD.
   /// @param _pair The address of UniswapV2 pair
   function price(address _pair) public view override returns (uint256) {
     address _token0 = IUniswapV2Pair(_pair).token0();
@@ -64,11 +64,11 @@ contract UniswapV2PairPriceOracle is Ownable, IPriceOracle {
     if (_token0 == _ald) {
       _validate(_pair, _ald, _token1, _reserve0, _reserve1);
       uint256 _amount = uint256(1e18).mul(_reserve1).div(_totalSupply);
-      return IPriceOracle(chainlink).value(_token1, _amount);
+      return IPriceOracle(chainlink).value(_token1, _amount) * 2;
     } else {
       _validate(_pair, _ald, _token0, _reserve1, _reserve0);
       uint256 _amount = uint256(1e18).mul(_reserve0).div(_totalSupply);
-      return IPriceOracle(chainlink).value(_token0, _amount);
+      return IPriceOracle(chainlink).value(_token0, _amount) * 2;
     }
   }
 
