@@ -2,11 +2,11 @@
 
 pragma solidity ^0.7.6;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts/math/Math.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "../interfaces/IDistributor.sol";
 import "../interfaces/IStaking.sol";
@@ -14,9 +14,9 @@ import "../interfaces/IXALD.sol";
 import "../interfaces/IWXALD.sol";
 import "../interfaces/IRewardBondDepositor.sol";
 
-contract Staking is Ownable, IStaking {
+contract Staking is OwnableUpgradeable, IStaking {
   using SafeMath for uint256;
-  using SafeERC20 for IERC20;
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   event Bond(address indexed recipient, uint256 aldAmount, uint256 wxALDAmount);
   event RewardBond(address indexed vault, uint256 aldAmount, uint256 wxALDAmount);
@@ -51,15 +51,15 @@ contract Staking is Ownable, IStaking {
   address public governor;
 
   // The address of ALD token.
-  address public immutable ALD;
+  address public ALD;
   // The address of xALD token.
-  address public immutable xALD;
+  address public xALD;
   // The address of wxALD token.
-  address public immutable wxALD;
+  address public wxALD;
   // The address of direct bond contract.
-  address public immutable directBondDepositor;
+  address public directBondDepositor;
   // The address of vault reward bond contract.
-  address public immutable rewardBondDepositor;
+  address public rewardBondDepositor;
 
   // The address of distributor.
   address public distributor;
@@ -108,26 +108,25 @@ contract Staking is Ownable, IStaking {
   /// @param _ALD The address of ALD token.
   /// @param _xALD The address of xALD token.
   /// @param _wxALD The address of wxALD token.
-  /// @param _directBondDepositor The address of direct bond contract.
   /// @param _rewardBondDepositor The address of reward bond contract.
-  constructor(
+  function initialize(
     address _ALD,
     address _xALD,
     address _wxALD,
-    address _directBondDepositor,
     address _rewardBondDepositor
-  ) {
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+
     require(_ALD != address(0), "Treasury: zero address");
     require(_xALD != address(0), "Treasury: zero address");
     require(_wxALD != address(0), "Treasury: zero address");
-    require(_directBondDepositor != address(0), "Treasury: zero address");
     require(_rewardBondDepositor != address(0), "Treasury: zero address");
 
     ALD = _ALD;
     xALD = _xALD;
     wxALD = _wxALD;
 
-    IERC20(_xALD).safeApprove(_wxALD, uint256(-1));
+    IERC20Upgradeable(_xALD).safeApprove(_wxALD, uint256(-1));
 
     paused = true;
     enableWhitelist = true;
@@ -135,7 +134,6 @@ contract Staking is Ownable, IStaking {
     defaultLockingPeriod = 90;
     bondLockingPeriod = 5;
 
-    directBondDepositor = _directBondDepositor;
     rewardBondDepositor = _rewardBondDepositor;
   }
 
@@ -275,7 +273,7 @@ contract Staking is Ownable, IStaking {
       require(isWhitelist[msg.sender], "Staking: not whitelist");
     }
 
-    uint256 _amount = IERC20(ALD).balanceOf(msg.sender);
+    uint256 _amount = IERC20Upgradeable(ALD).balanceOf(msg.sender);
     _amount = _transferAndWrap(msg.sender, _amount);
     _stakeFor(msg.sender, _amount);
   }
@@ -373,9 +371,9 @@ contract Staking is Ownable, IStaking {
     require(rewardBondDepositor == msg.sender, "Staking: not approved");
 
     if (distributor != address(0)) {
-      uint256 _pool = IERC20(ALD).balanceOf(address(this));
+      uint256 _pool = IERC20Upgradeable(ALD).balanceOf(address(this));
       IDistributor(distributor).distribute();
-      uint256 _distributed = IERC20(ALD).balanceOf(address(this)).sub(_pool);
+      uint256 _distributed = IERC20Upgradeable(ALD).balanceOf(address(this)).sub(_pool);
 
       (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
       IXALD(xALD).rebase(epochNumber, _distributed);
@@ -407,10 +405,10 @@ contract Staking is Ownable, IStaking {
 
     if (__unstake) {
       IXALD(xALD).unstake(address(this), unlockedAmount);
-      IERC20(ALD).safeTransfer(_recipient, unlockedAmount);
+      IERC20Upgradeable(ALD).safeTransfer(_recipient, unlockedAmount);
       emit Unstake(msg.sender, _recipient, unlockedAmount);
     } else {
-      IERC20(xALD).safeTransfer(_recipient, unlockedAmount);
+      IERC20Upgradeable(xALD).safeTransfer(_recipient, unlockedAmount);
     }
 
     (uint256 epochNumber, , , ) = IRewardBondDepositor(rewardBondDepositor).currentEpoch();
@@ -463,6 +461,12 @@ contract Staking is Ownable, IStaking {
     }
   }
 
+  function updateDirectBondDepositor(address _directBondDepositor) external onlyOwner {
+    require(_directBondDepositor != address(0), "Treasury: zero address");
+
+    directBondDepositor = _directBondDepositor;
+  }
+
   /********************************** Internal Functions **********************************/
 
   /// @dev all stakes on the same epoch are grouped at the expected start block of next epoch.
@@ -493,7 +497,7 @@ contract Staking is Ownable, IStaking {
 
   function _unstake(address _recipient, uint256 _amount) internal {
     IXALD(xALD).unstake(msg.sender, _amount);
-    IERC20(ALD).safeTransfer(_recipient, _amount);
+    IERC20Upgradeable(ALD).safeTransfer(_recipient, _amount);
 
     emit Unstake(msg.sender, _recipient, _amount);
   }
@@ -505,7 +509,7 @@ contract Staking is Ownable, IStaking {
   }
 
   function _transferAndWrap(address _sender, uint256 _amount) internal returns (uint256) {
-    IERC20(ALD).safeTransferFrom(_sender, address(this), _amount);
+    IERC20Upgradeable(ALD).safeTransferFrom(_sender, address(this), _amount);
     IXALD(xALD).stake(address(this), _amount);
     return IWXALD(wxALD).wrap(_amount);
   }

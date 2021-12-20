@@ -2,19 +2,19 @@
 
 pragma solidity ^0.7.6;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
 import "../interfaces/IVault.sol";
 import "../interfaces/IStaking.sol";
 import "../interfaces/ITreasury.sol";
 import "../interfaces/IRewardBondDepositor.sol";
 
-contract RewardBondDepositor is Ownable, IRewardBondDepositor {
+contract RewardBondDepositor is OwnableUpgradeable, IRewardBondDepositor {
   using SafeMath for uint256;
-  using SafeERC20 for IERC20;
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   uint256 private constant MAX_REWARD_TOKENS = 4;
 
@@ -43,9 +43,9 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
   }
 
   // The address of ald.
-  address public immutable ald;
+  address public ald;
   // The address of Treasury.
-  address public immutable treasury;
+  address public treasury;
 
   // The address of staking contract
   address public staking;
@@ -84,36 +84,36 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
   // Mapping from user address to a list of interacted vault
   mapping(address => address[]) private accountVaults;
 
-  address private _initializer;
-
-  constructor(
+  function initialize(
     address _ald,
     address _treasury,
+    uint64 _startBlock,
     uint64 _epochLength
-  ) {
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+
     require(_ald != address(0), "RewardBondDepositor: not zero address");
     require(_treasury != address(0), "RewardBondDepositor: not zero address");
+    require(_startBlock >= block.number, "RewardBondDepositor: start block too small");
+
     ald = _ald;
     treasury = _treasury;
 
     currentEpoch = Epoch({
       epochNumber: 0,
-      startBlock: uint64(block.number),
-      nextBlock: uint64(block.number + _epochLength),
-      epochLength: uint64(_epochLength)
+      startBlock: _startBlock,
+      nextBlock: _startBlock + _epochLength,
+      epochLength: _epochLength
     });
 
-    _initializer = msg.sender;
   }
 
-  function initialize(address _staking) external {
-    require(_initializer == msg.sender, "RewardBondDepositor: only initializer");
+  function initializeStaking(address _staking) external onlyOwner {
     require(_staking != address(0), "RewardBondDepositor: not zero address");
+    require(staking == address(0), "RewardBondDepositor: already set");
 
-    IERC20(ald).safeApprove(_staking, uint256(-1));
     staking = _staking;
-
-    _initializer = address(0);
+    IERC20Upgradeable(ald).safeApprove(_staking, uint256(-1));
   }
 
   /********************************** View Functions **********************************/
@@ -173,9 +173,9 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
 
     address[] memory _tokens = rewardTokens[msg.sender];
     for (uint256 i = 0; i < _tokens.length; i++) {
-      uint256 _pool = IERC20(_tokens[i]).balanceOf(address(this));
-      IERC20(_tokens[i]).safeTransferFrom(msg.sender, address(this), _amounts[i]);
-      uint256 _amount = IERC20(_tokens[i]).balanceOf(address(this)).sub(_pool);
+      uint256 _pool = IERC20Upgradeable(_tokens[i]).balanceOf(address(this));
+      IERC20Upgradeable(_tokens[i]).safeTransferFrom(msg.sender, address(this), _amounts[i]);
+      uint256 _amount = IERC20Upgradeable(_tokens[i]).balanceOf(address(this)).sub(_pool);
       if (_amount > 0) {
         hasReward = true;
         _pending.amounts[i] = _pending.amounts[i].add(_amount);
@@ -247,8 +247,8 @@ contract RewardBondDepositor is Ownable, IRewardBondDepositor {
         require(_rewardTokens.length <= MAX_REWARD_TOKENS, "RewardBondDepositor: too much reward");
         // approve token for treasury
         for (uint256 i = 0; i < _rewardTokens.length; i++) {
-          IERC20(_rewardTokens[i]).safeApprove(treasury, 0);
-          IERC20(_rewardTokens[i]).safeApprove(treasury, uint256(-1));
+          IERC20Upgradeable(_rewardTokens[i]).safeApprove(treasury, 0);
+          IERC20Upgradeable(_rewardTokens[i]).safeApprove(treasury, uint256(-1));
         }
 
         rewardTokens[_vault] = _rewardTokens;

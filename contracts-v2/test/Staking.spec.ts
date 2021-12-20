@@ -11,7 +11,7 @@ import {
   Distributor,
 } from "../typechain";
 import { MockContract } from "ethereum-waffle";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { deployMockForName } from "./mock";
 import { BigNumber, constants, Signer } from "ethers";
 import { expect } from "chai";
@@ -69,7 +69,12 @@ describe("RewardBondDepositor.spec", async () => {
     await treasury.updatePercentageContributor(0); // make it zero
 
     const RewardBondDepositor = await ethers.getContractFactory("RewardBondDepositor", deployer);
-    rewardBond = await RewardBondDepositor.deploy(ald.address, treasury.address, 100);
+    rewardBond = (await upgrades.deployProxy(RewardBondDepositor, [
+      ald.address,
+      treasury.address,
+      (await ethers.provider.getBlockNumber()) + 3,
+      100,
+    ])) as RewardBondDepositor;
     await rewardBond.deployed();
 
     const DirectBondDepositor = await ethers.getContractFactory("DirectBondDepositor", deployer);
@@ -77,7 +82,12 @@ describe("RewardBondDepositor.spec", async () => {
     await directBond.deployed();
 
     const Staking = await ethers.getContractFactory("Staking", deployer);
-    staking = await Staking.deploy(ald.address, xald.address, wxald.address, directBond.address, rewardBond.address);
+    staking = (await upgrades.deployProxy(Staking, [
+      ald.address,
+      xald.address,
+      wxald.address,
+      rewardBond.address,
+    ])) as Staking;
     await staking.deployed();
     await staking.updateDefaultLockingPeriod(6);
 
@@ -89,14 +99,21 @@ describe("RewardBondDepositor.spec", async () => {
     const MockVault = await ethers.getContractFactory("MockVault", deployer);
     vault = await MockVault.deploy(rewardBond.address, [token.address]);
 
-    await rewardBond.initialize(staking.address);
+    await rewardBond.initializeStaking(staking.address);
     await directBond.initialize(staking.address);
     await xald.initialize(staking.address);
     await staking.updateDistributor(distributor.address);
+    await staking.updateDirectBondDepositor(directBond.address);
     await rewardBond.updateKeeper(await deployer.getAddress());
     await treasury.updateRewardManager(distributor.address, true);
     await treasury.updateReserveDepositor(rewardBond.address, true);
     await treasury.updateReserveDepositor(directBond.address, true);
+  });
+
+  it("should revert, when try initialize staking again", async () => {
+    await expect(
+      staking.initialize(constants.AddressZero, constants.AddressZero, constants.AddressZero, constants.AddressZero)
+    ).to.revertedWith("Initializable: contract is already initialized");
   });
 
   context("#stake and #unstake", async () => {

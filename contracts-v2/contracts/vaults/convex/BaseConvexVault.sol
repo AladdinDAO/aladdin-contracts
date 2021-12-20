@@ -38,6 +38,8 @@ interface IBaseRewardPool {
   function getReward(address _account, bool _claimExtras) external returns (bool);
 
   function withdrawAndUnwrap(uint256 amount, bool claim) external returns (bool);
+
+  function earned(address _account) external view returns (uint256);
 }
 
 abstract contract BaseConvexVault is MultipleRewardsVaultBase {

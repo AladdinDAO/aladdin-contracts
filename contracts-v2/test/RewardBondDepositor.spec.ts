@@ -1,9 +1,9 @@
 /* eslint-disable node/no-missing-import */
 import { RewardBondDepositor, MockERC20, MockStaking, Treasury, MockVault } from "../typechain";
 import { MockContract } from "ethereum-waffle";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { deployMockForName } from "./mock";
-import { BigNumber, constants, Signer } from "ethers";
+import { BigNumber, constants, ContractFactory, Signer } from "ethers";
 import { expect } from "chai";
 import { advanceBlockTo } from "./utils";
 
@@ -48,15 +48,26 @@ describe("RewardBondDepositor.spec", async () => {
     await staking.deployed();
 
     const RewardBondDepositor = await ethers.getContractFactory("RewardBondDepositor", deployer);
-    bond = await RewardBondDepositor.deploy(ald.address, treasury.address, 100);
+    bond = (await upgrades.deployProxy(RewardBondDepositor as ContractFactory, [
+      ald.address,
+      treasury.address,
+      (await ethers.provider.getBlockNumber()) + 10,
+      100,
+    ])) as RewardBondDepositor;
     await bond.deployed();
 
     const MockVault = await ethers.getContractFactory("MockVault", deployer);
     vault = await MockVault.deploy(bond.address, [token.address]);
 
-    await bond.initialize(staking.address);
+    await bond.connect(deployer).initializeStaking(staking.address);
     await bond.updateKeeper(await deployer.getAddress());
     await treasury.updateReserveDepositor(bond.address, true);
+  });
+
+  it("should revert, when try initialize bond again", async () => {
+    await expect(bond.initialize(constants.AddressZero, constants.AddressZero, 0, 0)).to.revertedWith(
+      "Initializable: contract is already initialized"
+    );
   });
 
   context("#notify and #bond", async () => {
